@@ -4,7 +4,7 @@ import { FaInstagram, FaWhatsapp } from 'react-icons/fa';
 
 const Footer = () => {
     return (
-        <footer className="bg-black text-white py-6 mt-auto">
+        <footer className="bg-black text-white py-6 mt-auto fixed bottom-0 w-full">
             <div className="w-6xl mx-auto bottom-0 px-14">
                 <div className="flex justify-between items-center">
                     {/* Images and Text */}
