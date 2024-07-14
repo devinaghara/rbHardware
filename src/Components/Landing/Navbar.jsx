@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { FaShoppingCart } from 'react-icons/fa';
 import { CgProfile } from "react-icons/cg";
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [cartCount, setCartCount] = useState(0);
+
+    const navigate = useNavigate();
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -14,6 +17,13 @@ const Navbar = () => {
     const toggleDropdown = () => {
         setDropdownOpen(!dropdownOpen);
     };
+
+    const handleLogin = () =>{
+        navigate("/login");
+    }
+    const handleSignUp = () =>{
+        navigate("/signup");
+    }
 
     return (
         <nav className="bg-black shadow-lg">
@@ -47,8 +57,8 @@ const Navbar = () => {
                             />
                             {dropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-xl z-20">
-                                    <a href="#" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg">Log In</a>
-                                    <a href="#" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg">Sign Up</a>
+                                    <a href="/login" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg" onClick={handleLogin}>Log In</a>
+                                    <a href="/signup" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg" onClick={handleSignUp}>Sign Up</a>
                                 </div>
                             )}
                         </div>

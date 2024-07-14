@@ -1,17 +1,30 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
-import Navbar from './Components/Landing/Navbar'
-import Footer from './Components/Landing/Footer'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from './Components/Landing/Home/Home';
+import Login from './Components/Login/Login';
+import SignUp from './Components/SignUp/SignUp';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <Navbar />
-      <Footer/>
+      {/* <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/login" exact element={<Login />} />
+          <Route path="/signup" exact element={<SignUp />} />
+        </Routes>
+        <Footer />
+      </Router> */}
+
+      <Router>
+        <Routes>
+          <Route path="/" exact element={<Home />} />
+          <Route path="/login" exact element={<Login />} />
+          <Route path="/signup" exact element={<SignUp />} />
+        </Routes>
+      </Router>
+
     </>
   )
 }

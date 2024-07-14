@@ -30,7 +30,7 @@ const Footer = () => {
                             <p className="text-base">
                                 Ankit Ind. Area, Plot no. 25
                                 <br />
-                                B/H Gujarat Solvant, Near Rolex Baring
+                                Near Rolex Baring
                                 <br />
                                 Gondal Road, Kotharia, Dist. Rajkot
                             </p>
@@ -49,7 +49,7 @@ const Footer = () => {
                 <div className="flex justify-between items-center">
                     {/* Copyright Info */}
                     <p className="text-sm">
-                        &copy; 2024 First Company. All rights reserved.
+                        &copy; 2024 RB Hardware. All rights reserved
                     </p>
 
                     {/* Social Media Icons */}
