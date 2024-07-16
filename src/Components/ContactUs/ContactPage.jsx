@@ -31,9 +31,9 @@ const ContactPage = () => {
                 ></iframe>
                 <div className="contact-info bg-black text-white p-6 absolute top-0 left-0 mt-4 ml-4 shadow-lg rounded-lg">
                     <h2 className="text-2xl mb-4">Contact Information</h2>
-                    <p><FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" /> 1234 Street Name, City, State, 12345</p><br />
-                    <p><FontAwesomeIcon icon={faEnvelope} className="mr-2" /> company@gmail.com</p><br />
-                    <p><FontAwesomeIcon icon={faPhone} className="mr-2" /> (123) 456-7890</p>
+                    <p><FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" /> Ankit Ind. Area, Plot no. 25 Near Rolex Rings</p><br />
+                    <p><FontAwesomeIcon icon={faEnvelope} className="mr-2" /> xyz@gmail.com</p><br />
+                    <p><FontAwesomeIcon icon={faPhone} className="mr-2" /> +91 9824133099 , +91 9890206131</p>
                 </div>
             </div>
             <div className="w-full flex justify-center mt-8">
