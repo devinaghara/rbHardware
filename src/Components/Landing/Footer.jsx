@@ -1,6 +1,5 @@
 import React from 'react';
 import { FaInstagram, FaWhatsapp } from 'react-icons/fa';
-// import IndiaMARTLogo from './path-to-your-indiamart-logo.png'; // Ensure to replace with the correct path to your IndiaMART logo
 
 const Footer = () => {
     return (
@@ -30,8 +29,8 @@ const Footer = () => {
                             <p className="text-base">
                                 Ankit Ind. Area, Plot no. 25
                                 <br />
-                                Near Rolex Ring Gondal Road,
-                                Near Rolex Rings
+                                Near Rolex Rings,
+                                Gondal Road,
                                 <br />
                                 Kotharia, Dist. Rajkot
                             </p>
@@ -48,7 +47,6 @@ const Footer = () => {
                 </div>
                 <hr className="border-gray-400 my-4" />
                 <div className="flex justify-between items-center">
-                    {/* Copyright Info */}
                     <p className="text-sm">
                         &copy; 2024 RB Hardware. All rights reserved
                     </p>
