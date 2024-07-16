@@ -30,7 +30,7 @@ const Footer = () => {
                             <p className="text-base">
                                 Ankit Ind. Area, Plot no. 25
                                 <br />
-                                Near Rolex Baring
+                                Near Rolex Rings
                                 <br />
                                 Gondal Road, Kotharia, Dist. Rajkot
                             </p>
