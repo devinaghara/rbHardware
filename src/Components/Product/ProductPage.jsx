@@ -3,7 +3,7 @@ import React from 'react'
 const ProductPage = () => {
   return (
     <div>
-      <h2>jkl</h2>
+      <h1>Vasu Faldu</h1>
     </div>
   )
 }
