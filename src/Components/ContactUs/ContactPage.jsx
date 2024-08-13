@@ -2,7 +2,9 @@ import React from 'react';
 import emailjs from 'emailjs-com';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMapMarkerAlt, faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
-import './styles.css'; // Import custom styles for Google Font
+import { motion, useAnimation } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import './styles.css';
 
 const ContactPage = () => {
     const sendEmail = (e) => {
@@ -17,9 +19,37 @@ const ContactPage = () => {
         e.target.reset();
     };
 
+    const { ref: headingRef, inView: headingInView } = useInView({ triggerOnce: true });
+    const headingAnimation = useAnimation();
+
+    const { ref: formRef, inView: formInView } = useInView({ triggerOnce: true });
+    const formAnimation = useAnimation();
+
+    React.useEffect(() => {
+        if (headingInView) {
+            headingAnimation.start({ opacity: 1, y: 0 });
+        } else {
+            headingAnimation.start({ opacity: 0, y: -50 });
+        }
+    }, [headingInView, headingAnimation]);
+
+    React.useEffect(() => {
+        if (formInView) {
+            formAnimation.start({ opacity: 1, y: 0 });
+        } else {
+            formAnimation.start({ opacity: 0, y: 50 });
+        }
+    }, [formInView, formAnimation]);
+
     return (
         <div className="contact-us bg-gray-100 p-6 min-h-screen flex flex-col items-center">
-            <div className="w-full flex flex-col items-center mb-8">
+            <motion.div 
+                ref={headingRef} 
+                animate={headingAnimation} 
+                initial={{ opacity: 0, y: -50 }} 
+                transition={{ duration: 0.5 }}
+                className="w-full flex flex-col items-center mb-8"
+            >
                 <h2 className="custom-font text-4xl font-bold text-center w-11/12 lg:w-8/12 relative mb-4 text-orange-500">
                     Get In Touch
                     <span className="absolute left-1/2 transform -translate-x-1/2 -bottom-1 w-8/12 underline-primary"></span>
@@ -37,9 +67,15 @@ const ContactPage = () => {
                         referrerPolicy="no-referrer-when-downgrade"
                     ></iframe>
                 </div>
-            </div>
+            </motion.div>
 
-            <div className="w-full max-w-4xl bg-slate-50 shadow-md rounded-lg p-6 mt-6">
+            <motion.div 
+                ref={formRef} 
+                animate={formAnimation} 
+                initial={{ opacity: 0, y: 50 }} 
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-4xl bg-slate-50 shadow-md rounded-lg p-6 mt-6"
+            >
                 <div className="flex flex-col lg:flex-row mb-8">
                     <div className="w-full lg:w-1/2 flex flex-col items-start justify-center mb-8 lg:mb-0 lg:pr-8">
                         <h2 className="custom-font text-2xl font-bold mb-6 relative">
@@ -107,7 +143,7 @@ const ContactPage = () => {
                         </form>
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 };

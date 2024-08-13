@@ -1,0 +1,118 @@
+/* Base font styles */
+body {
+    font-family: 'Arial', sans-serif;
+    /* Base font for the application */
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Header styling */
+.header {
+    font-family: 'Roboto', sans-serif;
+    /* Font for headers */
+    font-size: 2.5rem;
+    /* Adjust font size for responsiveness */
+    font-weight: 700;
+    /* Bold weight */
+    color: #ff7f00;
+    /* Orange color */
+    margin-bottom: 1.5rem;
+    /* Increased margin */
+}
+
+/* Improved button styling */
+.button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: #ff7f00;
+    /* Orange color */
+    color: #ffffff;
+    /* White text */
+    border: none;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+    /* Font for buttons */
+    font-size: 1rem;
+    /* Button text size */
+    font-weight: 500;
+    /* Medium weight */
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.button:hover {
+    background-color: #ff9f00;
+    /* Lighter orange on hover */
+    transform: scale(1.05);
+    /* Slightly enlarge on hover */
+}
+
+/* Container styling */
+.container {
+    padding-top: 2rem;
+    /* Decreased top padding */
+    margin-left: 1rem;
+    /* Default margin-left */
+}
+
+@media (min-width: 640px) {
+    .container {
+        margin-left: 2rem;
+        /* Small screens and up */
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        margin:0 5rem;
+        /* margin-left: 5rem; */
+        /* Large screens and up */
+    }
+}
+
+/* Photo collage styling */
+.photo-collage {
+    height: auto;
+}
+
+.photo-collage img {
+    width: 100%;
+    /* Full width of the grid cell */
+    height: 100%;
+    /* Fixed height */
+    object-fit: cover;
+    /* Ensure the image covers the entire area */
+    border-radius: 0.5rem;
+    /* Rounded corners */
+}
+
+/* Featured products styling */
+.featured-products {
+    text-align: center;
+    padding: 2rem 1rem;
+    /* Responsive padding */
+}
+
+.featured-products h2 {
+    font-family: 'Roboto', sans-serif;
+    /* Font for headers */
+    font-size: 2rem;
+    /* Adjust font size for responsiveness */
+    font-weight: 700;
+    /* Bold weight */
+    color: #000;
+    /* Black color */
+    margin-bottom: 1rem;
+    /* Margin below the header */
+}
+
+.featured-products p {
+    font-family: 'Arial', sans-serif;
+    /* Font for paragraph */
+    font-size: 1.125rem;
+    /* Slightly larger font size */
+    color: #666;
+    /* Dark gray color for text */
+    margin: 0;
+    /* Remove default margin */
+}

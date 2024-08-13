@@ -5,6 +5,7 @@ import Home from './Components/Landing/Home/Home';
 import Login from './Components/Login/Login';
 import SignUp from './Components/SignUp/SignUp';
 import ContactUs from './Components/ContactUs/ContactUs';
+import Product from './Components/Product/Product';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/" exact element={<Home />} />
           <Route path="/login" exact element={<Login />} />
           <Route path="/signup" exact element={<SignUp />} />
+          <Route path="/product" exact element={<Product />} />
           <Route path="/contactus" exact element={<ContactUs />} />
         </Routes>
       </Router>

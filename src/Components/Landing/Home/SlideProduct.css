@@ -1,0 +1,19 @@
+/* SlideProduct.css */
+.feature-product-slide {
+    max-height: 450px;
+    overflow: hidden; /* Ensure content doesn’t overflow */
+}
+
+.feature-product-slide .slick-slide img {
+    object-fit: cover; 
+    height: 100%;
+    width: 100%;
+}
+
+.feature-product-slide .slick-dots {
+    bottom: 10px; /* Position dots at the bottom */
+}
+
+.feature-product-slide .slick-prev, .feature-product-slide .slick-next {
+    z-index: 10; /* Ensure navigation arrows are above other content */
+}
