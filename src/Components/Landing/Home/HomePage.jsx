@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import FeatureProductSlide from './FeatureProductSlide';
+import Whyus from './Whyus';
+import Facts from './Facts';
 
 const HomePage = () => {
     return (
         <div className="flex flex-col min-h-screen justify-center items-center pb-7">
-            <section className="w-full pt-12 flex justify-center px-4 lg:px-8">
+            <section className="pt-12 flex justify-center px-4 lg:px-8">
                 <div className="container grid gap-4 px-4 md:px-6 lg:grid-cols-2 lg:gap-16 items-center">
                     <div className="flex flex-col items-center lg:items-start justify-center space-y-4 text-center lg:text-left">
                         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
@@ -31,6 +33,8 @@ const HomePage = () => {
                 </div>
             </section>
             <FeatureProductSlide />
+            <Facts/>
+            <Whyus/>
         </div>
     );
 };
