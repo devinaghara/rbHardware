@@ -6,7 +6,7 @@ import Facts from './Facts';
 
 const HomePage = () => {
     return (
-        <div className="flex flex-col min-h-screen justify-center items-center pb-7">
+        <div className="flex flex-col min-h-screen justify-center items-center pb-7 mt-12">
             <section className="pt-12 flex justify-center px-4 lg:px-8">
                 <div className="container grid gap-4 px-4 md:px-6 lg:grid-cols-2 lg:gap-16 items-center">
                     <div className="flex flex-col items-center lg:items-start justify-center space-y-4 text-center lg:text-left">

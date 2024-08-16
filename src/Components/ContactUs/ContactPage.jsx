@@ -42,7 +42,7 @@ const ContactPage = () => {
     }, [formInView, formAnimation]);
 
     return (
-        <div className="contact-us bg-gray-100 p-6 min-h-screen flex flex-col items-center">
+        <div className="contact-us bg-gray-100 p-6 min-h-screen flex flex-col items-center mt-20">
             <motion.div 
                 ref={headingRef} 
                 animate={headingAnimation} 
