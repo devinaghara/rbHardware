@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import FeatureProductSlide from './FeatureProductSlide';
 import Whyus from './Whyus';
 import Facts from './Facts';
+import Aboutus from './Aboutus';
 
 const HomePage = () => {
     return (
@@ -35,6 +36,7 @@ const HomePage = () => {
             <FeatureProductSlide />
             <Facts/>
             <Whyus/>
+            <Aboutus/>
         </div>
     );
 };
