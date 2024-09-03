@@ -2,7 +2,8 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
     const {
@@ -11,9 +12,22 @@ const Login = () => {
         formState: { errors },
     } = useForm();
 
-    const onSubmit = (data) => {
-        console.log(data);
-        // Add logic to handle login
+    const navigate = useNavigate();
+
+    const onSubmit = async (data) => {
+        try {
+            const response = await axios.post('http://localhost:8000/auth/login', data, { withCredentials: true });
+            console.log(response.data);
+            navigate('/');
+        } catch (error) {
+            if (error.response) {
+                console.error('Login failed:', error.response.data.message);
+                alert('Login failed: ' + error.response.data.message);
+            } else {
+                console.error('Login failed:', error.message);
+                alert('Login failed: ' + error.message);
+            }
+        }
     };
 
     const handleGoogleLogin = () => {

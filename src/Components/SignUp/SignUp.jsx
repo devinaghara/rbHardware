@@ -2,7 +2,8 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Signup = () => {
     const {
@@ -11,9 +12,22 @@ const Signup = () => {
         formState: { errors },
     } = useForm();
 
-    const onSubmit = (data) => {
-        console.log(data);
-        // Add logic to handle sign-up
+    const navigate = useNavigate();
+
+    const onSubmit = async (data) => {
+        try {
+            const response = await axios.post('http://localhost:8000/auth/sign-up', data, { withCredentials: true });
+            console.log(response.data);
+            navigate('/');
+        } catch (error) {
+            if (error.response) {
+                console.error('sign-up failed:', error.response.data.message);
+                alert('sign-up failed: ' + error.response.data.message);
+            } else {
+                console.error('sign-up failed:', error.message);
+                alert('sign-up failed: ' + error.message);
+            }
+        }
     };
 
     const handleGoogleSignup = () => {
