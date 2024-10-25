@@ -1,17 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaShoppingCart } from 'react-icons/fa';
 import { CgProfile } from "react-icons/cg";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
 
     const cartCount = useSelector((state) => state.cart.totalQuantity);
+
+    // Check if user is logged in using axios
+    useEffect(() => {
+        const checkLoginStatus = async () => {
+            try {
+                const response = await axios.get('http://localhost:8000/auth/me', { withCredentials: true });
+                // print(response)
+                // console.log(response.body)
+                if (response.status = 200) {
+                    setIsLoggedIn(true);
+                }
+                else {
+                    setIsLoggedIn(false);
+                }
+            } catch (error) {
+                // console.error('Failed to check login status:', );
+                setIsLoggedIn(false);
+            }
+        };
+
+        checkLoginStatus();
+    }, []);
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -24,9 +48,24 @@ const Navbar = () => {
     const handleLogin = () => {
         navigate("/login");
     }
+
     const handleSignUp = () => {
         navigate("/signup");
     }
+
+    const handleLogout = async () => {
+        try {
+            await axios.get('http://localhost:8000/auth/logout', { withCredentials: true });
+            navigate("/login");
+            console.log('User logged out');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+
+    const isActive = (path) => {
+        return location.pathname === path || (path === '/product' && location.pathname.startsWith('/product/'));
+    };
 
     return (
         <nav className="bg-black shadow-lg fixed top-0 w-full z-50">
@@ -39,17 +78,17 @@ const Navbar = () => {
                             </a>
                         </div>
                         <div className="hidden md:flex items-center space-x-1">
-                            <a href="/" className={`py-6 px-4 text-lg font-semibold ${location.pathname === '/' ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Home</a>
-                            <a href="/product" className={`py-6 px-4 text-lg font-semibold ${location.pathname === '/product' ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Products</a>
-                            <a href="/download" className={`py-6 px-4 text-lg font-semibold ${location.pathname === '/download' ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Download</a>
-                            <a href="/contactus" className={`py-6 px-4 text-lg font-semibold ${location.pathname === '/contactus' ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Contact Us</a>
+                            <Link to="/" className={`py-6 px-4 text-lg font-semibold ${isActive('/') ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Home</Link>
+                            <Link to="/product" className={`py-6 px-4 text-lg font-semibold ${isActive('/product') ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Products</Link>
+                            <Link to="/download" className={`py-6 px-4 text-lg font-semibold ${isActive('/download') ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Download</Link>
+                            <Link to="/contactus" className={`py-6 px-4 text-lg font-semibold ${isActive('/contactus') ? 'text-white border-b-4 border-orange-500' : 'text-white hover:text-orange-500 transition duration-300'}`}>Contact Us</Link>
                         </div>
                     </div>
                     <div className="hidden md:flex items-center space-x-3 relative">
-                        <a href="#" className="py-2 px-5 font-medium text-white rounded hover:bg-orange-500 hover:text-white transition duration-300 relative">
+                        <Link to="/cart" className="py-2 px-5 font-medium text-white rounded hover:bg-orange-500 hover:text-white transition duration-300 relative">
                             <FaShoppingCart className="text-xl" />
                             <span className="absolute top-0 right-0 inline-block w-6 h-6 text-center text-white bg-orange-500 rounded-full">{cartCount}</span>
-                        </a>
+                        </Link>
                         <div className="relative">
                             <CgProfile
                                 className="h-8 w-8 rounded-full cursor-pointer text-white"
@@ -57,8 +96,19 @@ const Navbar = () => {
                             />
                             {dropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-xl z-20">
-                                    <a href="/login" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg" onClick={handleLogin}>Log In</a>
-                                    <a href="/signup" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg" onClick={handleSignUp}>Sign Up</a>
+                                    {isLoggedIn ? (
+                                        <>
+                                            <Link to="/profile" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white">Your Profile</Link>
+                                            <Link to="/wishlist" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white">Your Wishlist</Link>
+                                            <Link to="/order" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white">Your Order</Link>
+                                            <button className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white" onClick={handleLogout}>Logout</button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Link to="/login" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white" onClick={handleLogin}>Sign In</Link>
+                                            <Link to="/signup" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white" onClick={handleSignUp}>Sign Up</Link>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -80,10 +130,10 @@ const Navbar = () => {
             </div>
             <div className={`mobile-menu ${isOpen ? '' : 'hidden'} bg-white`}>
                 <ul>
-                    <li><a href="/" className={`block text-sm px-2 py-4 ${location.pathname === '/' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Home</a></li>
-                    <li><a href="/product" className={`block text-sm px-2 py-4 ${location.pathname === '/product' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Shop</a></li>
-                    <li><a href="/about" className={`block text-sm px-2 py-4 ${location.pathname === '/about' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>About</a></li>
-                    <li><a href="/contactus" className={`block text-sm px-2 py-4 ${location.pathname === '/contactus' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Contact</a></li>
+                    <li><Link to="/" className={`block text-sm px-2 py-4 ${location.pathname === '/' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Home</Link></li>
+                    <li><Link to="/product" className={`block text-sm px-2 py-4 ${location.pathname === '/product' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Shop</Link></li>
+                    <li><Link to="/about" className={`block text-sm px-2 py-4 ${location.pathname === '/about' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>About</Link></li>
+                    <li><Link to="/contactus" className={`block text-sm px-2 py-4 ${location.pathname === '/contactus' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Contact</Link></li>
                 </ul>
             </div>
         </nav>

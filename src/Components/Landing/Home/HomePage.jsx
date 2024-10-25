@@ -18,7 +18,7 @@ const HomePage = () => {
                             Established in the year 1998, RB Hardware is engaged in manufacturing, supplying, and exporting a technically advanced range of stainless-steel Builder Hardware fittings for doors & windows. Our products are fabricated using superior quality raw material and components, which are procured from the authentic vendors of the industry. Finding application in diverse industries, the range that we export is widely known for its high-end features like excellent finish, dimensional accuracy, high tensile strength, corrosion resistance and durability.
                         </p>
                         <Link
-                            to="/products"
+                            to="/product"
                             className="inline-flex h-10 items-center justify-center rounded-md bg-orange-500 text-white px-8 text-sm font-medium shadow transition-colors hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                         >
                             Shop Now

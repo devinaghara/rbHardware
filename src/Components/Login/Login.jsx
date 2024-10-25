@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import ImageMosaicLoader from '../Loader/ImageMosaicLoader';
 
 const Login = () => {
     const {
@@ -13,8 +14,10 @@ const Login = () => {
     } = useForm();
 
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
 
     const onSubmit = async (data) => {
+        setIsLoading(true);
         try {
             const response = await axios.post('http://localhost:8000/auth/login', data, { withCredentials: true });
             console.log(response.data);
@@ -27,6 +30,8 @@ const Login = () => {
                 console.error('Login failed:', error.message);
                 alert('Login failed: ' + error.message);
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -38,12 +43,13 @@ const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-sport-bg bg-cover bg-center">
             <motion.div
-                className="bg-opacity-90 p-6 rounded-lg shadow-2xl w-80"
+                className="relative bg-opacity-90 p-6 rounded-lg shadow-2xl w-80"
                 initial={{ opacity: 0, y: -50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 style={{ backgroundColor: "#000000" }}
             >
+                {isLoading && <ImageMosaicLoader size={70} />}
                 <img
                     src="https://res.cloudinary.com/ddxe0b0kf/image/upload/v1720874424/dx22aboggirzfutgulei.jpg"
                     alt="Top Image"
@@ -56,8 +62,7 @@ const Login = () => {
                             id="email"
                             type="email"
                             placeholder="Email"
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'
-                                }`}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
                             {...register('email', { required: 'Email is required' })}
                         />
                         {errors.email && (
@@ -69,8 +74,7 @@ const Login = () => {
                             id="password"
                             type="password"
                             placeholder="Password"
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'
-                                }`}
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'}`}
                             {...register('password', { required: 'Password is required' })}
                         />
                         {errors.password && (
