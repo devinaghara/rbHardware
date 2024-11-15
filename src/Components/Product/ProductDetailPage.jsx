@@ -6,6 +6,8 @@ import Navbar from "../Landing/Navbar";
 import { useDispatch, useSelector } from 'react-redux';
 import { addItem, removeItem } from '../../Redux/actions/cartActions';
 import { addToWishlist, removeFromWishlist } from '../../Redux/actions/wishlistAction';
+import { API_URI } from "../../../config";
+import ImageMosaicLoader from "../Loader/ImageMosaicLoader";
 
 export default function ProductDetailPage() {
     const { productId } = useParams();  // Get product ID from URL
@@ -24,7 +26,7 @@ export default function ProductDetailPage() {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/plist/productlist/${productId}`);
+                const response = await axios.get(`${API_URI}/plist/productlist/${productId}`);
                 const fetchedProduct = {
                     ...response.data,
                     id: response.data._id // Normalize the id field
@@ -38,20 +40,23 @@ export default function ProductDetailPage() {
                 navigate("/product");
             }
         };
-    
+
         fetchProduct();
     }, [productId, navigate]);
 
     if (!product) {
-        return <div>Loading...</div>;
+        return <ImageMosaicLoader/>;
     }
 
-    const handleColorChange = (color) => {
-        const colorProduct = product.availableColors.find((item) => 
-            item.name === color
-        );
+    const handleColorChange = (id) => {
+        // const colorProduct = product.availableColors.find((item) => item.name === color);
+        const colorProduct = product.availableColors.find((item) => item.productId === id);
+        console.log(colorProduct);
+
         if (colorProduct) {
             setSelectedColor(colorProduct.name);
+            navigate(`/product/${id}`);
+            // navigate(`/product/${product._id}?color=${colorProduct.name}`);
         }
     };
 
@@ -91,9 +96,8 @@ export default function ProductDetailPage() {
                                 key={index}
                                 src={img}
                                 alt={`${product.name}-${index}`}
-                                className={`w-20 h-20 object-cover cursor-pointer border-2 rounded-md ${
-                                    selectedImage === img ? "border-blue-500" : "border-transparent"
-                                }`}
+                                className={`w-20 h-20 object-cover cursor-pointer border-2 rounded-md ${selectedImage === img ? "border-blue-500" : "border-transparent"
+                                    }`}
                                 onClick={() => setSelectedImage(img)}
                             />
                         ))}
@@ -112,11 +116,10 @@ export default function ProductDetailPage() {
                             {product.availableColors.map((colorObj) => (
                                 <div
                                     key={colorObj.name}
-                                    className={`cursor-pointer rounded-full h-8 w-8 ${
-                                        selectedColor === colorObj.name ? "ring-4 ring-gray-400" : ""
-                                    }`}
+                                    className={`cursor-pointer rounded-full h-8 w-8 ${selectedColor === colorObj.name ? "ring-4 ring-gray-400" : ""
+                                        }`}
                                     style={{ backgroundColor: colorObj.colorCode }}
-                                    onClick={() => handleColorChange(colorObj.name)}
+                                    onClick={() => handleColorChange(colorObj.productId)}
                                 >
                                     <span className="sr-only">{colorObj.name}</span>
                                 </div>
@@ -127,22 +130,22 @@ export default function ProductDetailPage() {
                     <div className="flex space-x-4 my-4">
                         {cartItem ? (
                             <div className="flex items-center space-x-4">
-                                <button 
-                                    className="bg-red-500 text-white p-2 rounded-md" 
+                                <button
+                                    className="bg-red-500 text-white p-2 rounded-md"
                                     onClick={removeFromCart}
                                 >
                                     <FaMinus />
                                 </button>
                                 <span>{cartItem.quantity}</span>
-                                <button 
-                                    className="bg-green-500 text-white p-2 rounded-md" 
+                                <button
+                                    className="bg-green-500 text-white p-2 rounded-md"
                                     onClick={addToCart}
                                 >
                                     <FaPlus />
                                 </button>
                             </div>
                         ) : (
-                            <button 
+                            <button
                                 className="px-4 py-2 bg-orange-500 text-white rounded transition duration-300 ease-in-out hover:bg-orange-600"
                                 onClick={addToCart}
                             >

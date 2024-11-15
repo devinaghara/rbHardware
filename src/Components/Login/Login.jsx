@@ -5,6 +5,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ImageMosaicLoader from '../Loader/ImageMosaicLoader';
+import { API_URI } from '../../../config';
 
 const Login = () => {
     const {
@@ -19,7 +20,7 @@ const Login = () => {
     const onSubmit = async (data) => {
         setIsLoading(true);
         try {
-            const response = await axios.post('http://localhost:8000/auth/login', data, { withCredentials: true });
+            const response = await axios.post(`${API_URI}/auth/login`, data, { withCredentials: true });
             console.log(response.data);
             navigate('/');
         } catch (error) {

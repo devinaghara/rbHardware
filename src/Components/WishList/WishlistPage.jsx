@@ -6,6 +6,7 @@ import { removeFromWishlist } from '../../Redux/actions/wishlistAction';
 import { addItem, removeItem } from '../../Redux/actions/cartActions';
 import Navbar from "../Landing/Navbar";
 import axios from "axios";
+import { API_URI } from "../../../config";
 
 export default function WishlistPage() {
     const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function WishlistPage() {
                 setLoading(true);
                 const productsData = await Promise.all(
                     wishlistItems.map(productId =>
-                        axios.get(`http://localhost:8000/plist/productlist/${productId}`)
+                        axios.get(`${API_URI}/plist/productlist/${productId}`)
                             .then(response => response.data)
                     )
                 );
@@ -58,7 +59,7 @@ export default function WishlistPage() {
             setIsUpdatingCart(true);
             // Check if product is already in cart
             const existingCartItem = cartItems.find(item => item._id === product._id);
-            
+
             if (existingCartItem) {
                 // If product exists, increment quantity
                 dispatch(addItem({
@@ -84,7 +85,7 @@ export default function WishlistPage() {
         try {
             setIsUpdatingCart(true);
             const existingCartItem = cartItems.find(item => item._id === productId);
-            
+
             if (existingCartItem && existingCartItem.quantity > 1) {
                 // If quantity > 1, just decrement
                 dispatch(addItem({
@@ -131,14 +132,14 @@ export default function WishlistPage() {
                         </div>
                     </div>
                 )}
-                
+
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-8">My Wishlist</h1>
-                    
+
                     {wishlistProducts.length === 0 ? (
                         <div className="bg-white rounded-lg shadow p-6 text-center">
                             <p className="text-gray-500 text-lg">Your wishlist is empty</p>
-                            <button 
+                            <button
                                 className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600"
                                 onClick={() => navigate('/product')}
                             >
@@ -149,7 +150,7 @@ export default function WishlistPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {wishlistProducts.map((product) => {
                                 const cartItem = cartItems.find(item => item._id === product._id);
-                                
+
                                 return (
                                     <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden">
                                         <img
@@ -167,7 +168,7 @@ export default function WishlistPage() {
                                                 <div className="flex items-center">
                                                     {cartItem ? (
                                                         <div className="flex items-center space-x-4">
-                                                            <button 
+                                                            <button
                                                                 className="bg-red-500 text-white p-2 rounded-md disabled:opacity-50"
                                                                 onClick={() => handleRemoveFromCart(product._id)}
                                                                 disabled={isUpdatingCart}
@@ -175,7 +176,7 @@ export default function WishlistPage() {
                                                                 <FaMinus />
                                                             </button>
                                                             <span>{cartItem.quantity}</span>
-                                                            <button 
+                                                            <button
                                                                 className="bg-green-500 text-white p-2 rounded-md disabled:opacity-50"
                                                                 onClick={() => handleAddToCart(product)}
                                                                 disabled={isUpdatingCart}
@@ -184,7 +185,7 @@ export default function WishlistPage() {
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <button 
+                                                        <button
                                                             className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50"
                                                             onClick={() => handleAddToCart(product)}
                                                             disabled={isUpdatingCart}

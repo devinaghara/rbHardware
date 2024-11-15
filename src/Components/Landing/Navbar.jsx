@@ -4,6 +4,7 @@ import { CgProfile } from "react-icons/cg";
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import { API_URI } from '../../../config';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -19,7 +20,7 @@ const Navbar = () => {
     useEffect(() => {
         const checkLoginStatus = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/auth/me', { withCredentials: true });
+                const response = await axios.get(`${API_URI}/auth/me`, { withCredentials: true });
                 // print(response)
                 // console.log(response.body)
                 if (response.status = 200) {
@@ -55,7 +56,7 @@ const Navbar = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.get('http://localhost:8000/auth/logout', { withCredentials: true });
+            await axios.get('${API_URI}/auth/logout', { withCredentials: true });
             navigate("/login");
             console.log('User logged out');
         } catch (error) {

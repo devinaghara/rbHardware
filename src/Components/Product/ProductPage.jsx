@@ -5,6 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addItem } from '../../Redux/actions/cartActions';
 import { addToWishlist, removeFromWishlist } from '../../Redux/actions/wishlistAction';
 import axios from 'axios';  // Import axios
+import { API_URI } from "../../../config";
+import ImageMosaicLoader from "../Loader/ImageMosaicLoader";
 
 // Add all categories, colors, and materials
 const categories = [
@@ -35,7 +37,7 @@ export default function ProductPage() {
         const fetchProducts = async () => {
             try {
                 setLoading(true); // Start loading
-                const response = await axios.get('http://localhost:8000/plist/productlist');  // Replace with your backend endpoint
+                const response = await axios.get(`${API_URI}/plist/productlist`);  // Replace with your backend endpoint
                 setProducts(response.data); // Store products in state
                 setLoading(false); // Stop loading
             } catch (error) {
@@ -92,7 +94,7 @@ export default function ProductPage() {
     });
 
     if (loading) {
-        return <div>Loading...</div>; // Display loading state
+        return <ImageMosaicLoader/>; // Display loading state
     }
 
     if (error) {

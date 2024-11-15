@@ -19,7 +19,7 @@ const Signup = () => {
     const onSubmit = async (data) => {
         setIsLoading(true);
         try {
-            const response = await axios.post('http://localhost:8000/auth/sign-up', data, { withCredentials: true });
+            const response = await axios.post('${API_URI}/auth/sign-up', data, { withCredentials: true });
             console.log(response.data);
             navigate('/');
         } catch (error) {
@@ -50,7 +50,7 @@ const Signup = () => {
                 style={{ backgroundColor: "#000000" }}
             >
                 {isLoading && <Loader size={40} />}
-                
+
                 {/* Updated Image Transition */}
                 <motion.img
                     src="https://res.cloudinary.com/ddxe0b0kf/image/upload/v1720874424/dx22aboggirzfutgulei.jpg"
