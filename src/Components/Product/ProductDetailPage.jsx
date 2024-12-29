@@ -16,6 +16,7 @@ export default function ProductDetailPage() {
     const [product, setProduct] = useState(null);
     const [selectedImage, setSelectedImage] = useState("");
     const [selectedColor, setSelectedColor] = useState("");
+    const [linkedProducts, setLinkedProducts] = useState([]);
 
     const cartItems = useSelector(state => state.cart.items);
     const wishlistItems = useSelector(state => state.wishlist.items);
@@ -24,39 +25,64 @@ export default function ProductDetailPage() {
 
     // Fetch product details from backend API
     useEffect(() => {
-        const fetchProduct = async () => {
+        const fetchProductAndVariants = async () => {
             try {
                 const response = await axios.get(`${API_URI}/plist/productlist/${productId}`);
-                const fetchedProduct = {
-                    ...response.data,
-                    id: response.data._id // Normalize the id field
-                };
-                // const fetchedProduct = response.data;
+                const fetchedProduct = response.data.product;
                 setProduct(fetchedProduct);
                 setSelectedImage(fetchedProduct.images[0]);
                 setSelectedColor(fetchedProduct.color);
+
+                // First, add current product to linked products array
+                const currentProductColor = {
+                    productId: fetchedProduct._id,
+                    color: fetchedProduct.color,
+                    colorCode: fetchedProduct.colorCode
+                };
+
+                // If there are linked products, fetch their details
+                if (fetchedProduct.linkedProducts && fetchedProduct.linkedProducts.length > 0) {
+                    try {
+                        // Fetch all linked products' details
+                        const linkedProductsPromises = fetchedProduct.linkedProducts.map(linkedId =>
+                            axios.get(`${API_URI}/plist/productlist/${linkedId}`)
+                        );
+                        const linkedProductsResponses = await Promise.all(linkedProductsPromises);
+
+                        // Extract and format linked products data
+                        const linkedProductsData = linkedProductsResponses.map(response => ({
+                            productId: response.data.product._id,
+                            color: response.data.product.color,
+                            colorCode: response.data.product.colorCode
+                        }));
+
+                        // Combine current product with linked products
+                        setLinkedProducts([currentProductColor, ...linkedProductsData]);
+                    } catch (error) {
+                        console.error("Error fetching linked products:", error);
+                    }
+                } else {
+                    // If no linked products, just set the current product
+                    setLinkedProducts([currentProductColor]);
+                }
+
             } catch (error) {
                 console.error("Error fetching product details:", error);
                 navigate("/product");
             }
         };
 
-        fetchProduct();
+        fetchProductAndVariants();
     }, [productId, navigate]);
 
+
     if (!product) {
-        return <ImageMosaicLoader/>;
+        return <ImageMosaicLoader />;
     }
 
     const handleColorChange = (id) => {
-        // const colorProduct = product.availableColors.find((item) => item.name === color);
-        const colorProduct = product.availableColors.find((item) => item.productId === id);
-        console.log(colorProduct);
-
-        if (colorProduct) {
-            setSelectedColor(colorProduct.name);
+        if (id !== product._id) {
             navigate(`/product/${id}`);
-            // navigate(`/product/${product._id}?color=${colorProduct.name}`);
         }
     };
 
@@ -113,15 +139,23 @@ export default function ProductDetailPage() {
                     <div className="my-4">
                         <h2 className="text-lg font-semibold">Available Colors:</h2>
                         <div className="flex space-x-4 mt-2">
-                            {product.availableColors.map((colorObj) => (
+                            {linkedProducts.map((variant) => (
                                 <div
-                                    key={colorObj.name}
-                                    className={`cursor-pointer rounded-full h-8 w-8 ${selectedColor === colorObj.name ? "ring-4 ring-gray-400" : ""
-                                        }`}
-                                    style={{ backgroundColor: colorObj.colorCode }}
-                                    onClick={() => handleColorChange(colorObj.productId)}
+                                    key={variant.productId}
+                                    className={`relative cursor-pointer group`}
+                                    onClick={() => handleColorChange(variant.productId)}
                                 >
-                                    <span className="sr-only">{colorObj.name}</span>
+                                    <div
+                                        className={`w-8 h-8 rounded-full ${product._id === variant.productId ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                                            }`}
+                                        style={{ backgroundColor: variant.colorCode }}
+                                    />
+                                    {/* Color name tooltip */}
+                                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 
+                    bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 
+                    transition-opacity duration-200 mb-2 whitespace-nowrap">
+                                        {variant.color}
+                                    </span>
                                 </div>
                             ))}
                         </div>

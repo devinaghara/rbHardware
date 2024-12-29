@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaUser, FaBoxOpen, FaAddressCard, FaCog, FaSignOutAlt, FaCamera, FaHome } from 'react-icons/fa';
+import { FaUser, FaBoxOpen, FaAddressCard, FaCog, FaSignOutAlt, FaCamera, FaHome, FaEdit } from 'react-icons/fa';
 import AddressManagement from '../Address/AddressManagement';
 import OrderPage from '../Orders/OrderPage';
 import { API_URI } from '../../../config';
@@ -22,10 +22,10 @@ const ProfilePage = () => {
         email: '',
         phone: ''
     });
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const navigate = useNavigate();
 
-    // Fetch user data when component mounts
     useEffect(() => {
         fetchUserData();
     }, []);
@@ -37,17 +37,14 @@ const ProfilePage = () => {
                 withCredentials: true
             });
             const user = response.data.user;
-            setUserData({
+            const userInfo = {
                 name: user.name,
                 email: user.email,
                 phone: user.phone || '',
                 avatar: '/api/placeholder/150/150'
-            });
-            setFormData({
-                name: user.name,
-                email: user.email,
-                phone: user.phone || ''
-            });
+            };
+            setUserData(userInfo);
+            setFormData(userInfo);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to fetch user data');
             if (err.response?.status === 401) {
@@ -69,7 +66,7 @@ const ProfilePage = () => {
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.put('${API_URI}/auth/update-profile', formData, {
+            const response = await axios.put(`${API_URI}/auth/update-profile`, formData, {
                 withCredentials: true
             });
 
@@ -79,6 +76,7 @@ const ProfilePage = () => {
                     ...formData
                 });
                 setUpdateSuccess(true);
+                setIsEditMode(false);
                 setTimeout(() => setUpdateSuccess(false), 3000);
             }
         } catch (err) {
@@ -87,9 +85,15 @@ const ProfilePage = () => {
         }
     };
 
+    const handleCancelEdit = () => {
+        setFormData(userData);
+        setIsEditMode(false);
+        setError(null);
+    };
+
     const handleLogout = async () => {
         try {
-            await axios.get('${API_URI}/auth/logout', { withCredentials: true });
+            await axios.get(`${API_URI}/auth/logout`, { withCredentials: true });
             navigate("/login");
         } catch (error) {
             console.error('Logout failed:', error);
@@ -133,49 +137,90 @@ const ProfilePage = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleUpdateProfile} className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-200">Full Name</label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
+                    {!isEditMode ? (
+                        <div className="space-y-4">
+                            <div className="bg-gray-700 p-4 rounded-lg">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-semibold text-white">Profile Information</h3>
+                                    <button
+                                        onClick={() => setIsEditMode(true)}
+                                        className="flex items-center space-x-2 text-orange-500 hover:text-orange-400"
+                                    >
+                                        <FaEdit className='text-lg' />
+                                        <span className='text-lg'>Edit Profile</span>
+                                    </button>
+                                </div>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-sm text-gray-400">Full Name</label>
+                                        <p className="text-white">{userData.name}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-400">Email</label>
+                                        <p className="text-white">{userData.email}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm text-gray-400">Phone</label>
+                                        <p className="text-white">{userData.phone || 'Not provided'}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-200">Email</label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-200">Phone</label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            className="w-full px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-300"
-                        >
-                            Update Profile
-                        </button>
-                    </form>
+                    ) : (
+                        <form onSubmit={handleUpdateProfile} className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-200">Full Name</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-200">Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-200">Phone</label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleInputChange}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div className="flex space-x-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-300"
+                                >
+                                    Save Changes
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleCancelEdit}
+                                    className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-300"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    )}
                 </>
             )}
         </div>
     );
 
+    // Rest of the code remains the same...
     const renderTabContent = () => {
         switch (activeTab) {
             case 'profile':
@@ -211,8 +256,8 @@ const ProfilePage = () => {
                                         key={item.id}
                                         onClick={item.onClick || (() => setActiveTab(item.id))}
                                         className={`w-full flex items-center space-x-2 p-3 rounded-lg transition duration-300 ${activeTab === item.id && !item.onClick
-                                                ? 'bg-orange-500 text-white'
-                                                : 'text-gray-400 hover:bg-gray-700'
+                                            ? 'bg-orange-500 text-white'
+                                            : 'text-gray-400 hover:bg-gray-700'
                                             }`}
                                     >
                                         <item.icon />

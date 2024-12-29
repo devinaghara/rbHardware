@@ -22,17 +22,42 @@ export default function WishlistPage() {
         const fetchWishlistProducts = async () => {
             try {
                 setLoading(true);
+                setError(null);
+
                 const productsData = await Promise.all(
-                    wishlistItems.map(productId =>
-                        axios.get(`${API_URI}/plist/productlist/${productId}`)
-                            .then(response => response.data)
-                    )
+                    wishlistItems.map(async productId => {
+                        try {
+                            const response = await axios.get(`${API_URI}/plist/productlist/${productId}`);
+                            // Check if response has data property
+                            if (response.data) {
+                                return response.data;
+                            }
+                            console.error(`No data for product ${productId}`);
+                            return null;
+                        } catch (err) {
+                            console.error(`Error fetching product ${productId}:`, err);
+                            return null;
+                        }
+                    })
                 );
-                setWishlistProducts(productsData);
-                setLoading(false);
+
+                // Log for debugging
+                console.log('Fetched products:', productsData);
+
+                // Filter out null responses and set products
+                const validProducts = productsData.filter(product =>
+                    product !== null && product._id && product.name
+                );
+                console.log(validProducts)
+                if (validProducts.length === 0 && wishlistItems.length > 0) {
+                    setError("Unable to load wishlist products. Please try again.");
+                }
+
+                setWishlistProducts(validProducts);
             } catch (error) {
                 console.error("Error fetching wishlist products:", error);
                 setError("Failed to load wishlist products");
+            } finally {
                 setLoading(false);
             }
         };
@@ -149,21 +174,31 @@ export default function WishlistPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {wishlistProducts.map((product) => {
+                                if (!product || !product.images || !product.images.length) {
+                                    return null;
+                                }
+
                                 const cartItem = cartItems.find(item => item._id === product._id);
 
                                 return (
                                     <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden">
                                         <img
                                             src={product.images[0]}
-                                            alt={product.name}
+                                            alt={product.name || 'Product Image'}
                                             className="w-full h-48 object-cover cursor-pointer"
                                             onClick={() => handleProductClick(product._id)}
+                                            onError={(e) => {
+                                                e.target.src = 'path/to/fallback/image.jpg'; // Add a fallback image
+                                                e.target.onerror = null; // Prevent infinite loop
+                                            }}
                                         />
                                         <div className="p-4">
                                             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                                {product.name}
+                                                {product.name || 'Unknown Product'}
                                             </h3>
-                                            <p className="text-gray-600 mb-2">${product.price.toFixed(2)}</p>
+                                            <p className="text-gray-600 mb-2">
+                                                ${(product.price || 0).toFixed(2)}
+                                            </p>
                                             <div className="flex justify-between items-center mt-4">
                                                 <div className="flex items-center">
                                                     {cartItem ? (

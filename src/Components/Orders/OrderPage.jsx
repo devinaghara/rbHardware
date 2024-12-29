@@ -1,61 +1,74 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBox, FaShippingFast, FaCheckCircle, FaSpinner, FaTimes, FaCreditCard, FaMapMarkerAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { useLocation } from 'react-router-dom';
 
 const OrderPage = () => {
+    // const [orders, setOrders] = useState([
+    //     {
+    //         id: "ORD123456",
+    //         date: "2024-03-20",
+    //         total: 599.98,
+    //         status: "Delivered",
+    //         items: [
+    //             {
+    //                 id: 1,
+    //                 name: "Gaming Laptop",
+    //                 price: 499.99,
+    //                 quantity: 1,
+    //                 image: "/api/placeholder/80/80"
+    //             },
+    //             {
+    //                 id: 2,
+    //                 name: "Gaming Mouse",
+    //                 price: 99.99,
+    //                 quantity: 1,
+    //                 image: "/api/placeholder/80/80"
+    //             }
+    //         ],
+    //         shippingAddress: {
+    //             street: "123 Main St",
+    //             city: "New York",
+    //             state: "NY",
+    //             zipCode: "10001"
+    //         },
+    //         paymentMethod: "Credit Card (**** 1234)"
+    //     },
+    //     {
+    //         id: "ORD123457",
+    //         date: "2024-03-15",
+    //         total: 299.99,
+    //         status: "In Transit",
+    //         items: [
+    //             {
+    //                 id: 3,
+    //                 name: "Mechanical Keyboard",
+    //                 price: 299.99,
+    //                 quantity: 1,
+    //                 image: "/api/placeholder/80/80"
+    //             }
+    //         ],
+    //         shippingAddress: {
+    //             street: "123 Main St",
+    //             city: "New York",
+    //             state: "NY",
+    //             zipCode: "10001"
+    //         },
+    //         paymentMethod: "PayPal"
+    //     }
+    // ]);
+
+    const location = useLocation();
     const [orders, setOrders] = useState([
-        {
-            id: "ORD123456",
-            date: "2024-03-20",
-            total: 599.98,
-            status: "Delivered",
-            items: [
-                {
-                    id: 1,
-                    name: "Gaming Laptop",
-                    price: 499.99,
-                    quantity: 1,
-                    image: "/api/placeholder/80/80"
-                },
-                {
-                    id: 2,
-                    name: "Gaming Mouse",
-                    price: 99.99,
-                    quantity: 1,
-                    image: "/api/placeholder/80/80"
-                }
-            ],
-            shippingAddress: {
-                street: "123 Main St",
-                city: "New York",
-                state: "NY",
-                zipCode: "10001"
-            },
-            paymentMethod: "Credit Card (**** 1234)"
-        },
-        {
-            id: "ORD123457",
-            date: "2024-03-15",
-            total: 299.99,
-            status: "In Transit",
-            items: [
-                {
-                    id: 3,
-                    name: "Mechanical Keyboard",
-                    price: 299.99,
-                    quantity: 1,
-                    image: "/api/placeholder/80/80"
-                }
-            ],
-            shippingAddress: {
-                street: "123 Main St",
-                city: "New York",
-                state: "NY",
-                zipCode: "10001"
-            },
-            paymentMethod: "PayPal"
-        }
+        // ... existing sample orders ...
     ]);
+    useEffect(() => {
+        // If there's a new order in the navigation state, add it to the orders
+        if (location.state?.newOrder) {
+            setOrders(prevOrders => [location.state.newOrder, ...prevOrders]);
+        }
+    }, [location.state]);
+
 
     const [expandedOrder, setExpandedOrder] = useState(null);
     const navigate = useNavigate();

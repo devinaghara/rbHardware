@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearCart } from '../../Redux/actions/cartActions';
 import { FaArrowLeft, FaCreditCard, FaPaypal, FaGooglePay, FaApplePay, FaLock } from 'react-icons/fa';
 import Navbar from '../Landing/Navbar';
 
 const PaymentPage = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const cartItems = useSelector(state => state.cart.items);
+    const totalAmount = useSelector(state => state.cart.totalAmount);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -15,13 +20,47 @@ const PaymentPage = () => {
         { id: 'apple-pay', name: 'Apple Pay', icon: FaApplePay },
     ];
 
+    const createOrder = () => {
+        const newOrder = {
+            id: `ORD${Math.floor(Math.random() * 1000000)}`,
+            date: new Date().toISOString().split('T')[0],
+            total: totalAmount,
+            status: "Processing",
+            items: cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                image: item.images[0]  // Assuming the first image is the main one
+            })),
+            shippingAddress: {
+                // You would get this from your address state/store
+                street: "123 Main St",
+                city: "New York",
+                state: "NY",
+                zipCode: "10001"
+            },
+            paymentMethod: selectedMethod === 'credit-card' ? 
+                "Credit Card (**** 1234)" : 
+                paymentMethods.find(method => method.id === selectedMethod)?.name
+        };
+        return newOrder;
+    };
+
     const handlePaymentSubmit = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setIsProcessing(true);
+        
+        // Create the new order
+        const newOrder = createOrder();
+        
         // Simulate payment processing
         setTimeout(() => {
             setIsProcessing(false);
-            navigate('/order-confirmation'); // You'll need to create this page
+            // Clear the cart
+            dispatch(clearCart());
+            // Navigate to OrderPage with the new order
+            navigate('/order', { state: { newOrder } });
         }, 2000);
     };
 

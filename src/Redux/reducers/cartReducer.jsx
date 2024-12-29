@@ -61,9 +61,9 @@ const cartReducer = (state = initialState, action) => {
 
         case CLEAR_CART:
             return {
+                ...state,
                 items: [],
-                totalQuantity: 0,
-                totalAmount: 0,
+                totalAmount: 0
             };
 
         default:

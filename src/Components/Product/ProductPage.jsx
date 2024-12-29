@@ -4,51 +4,50 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { addItem } from '../../Redux/actions/cartActions';
 import { addToWishlist, removeFromWishlist } from '../../Redux/actions/wishlistAction';
-import axios from 'axios';  // Import axios
+import axios from 'axios';
 import { API_URI } from "../../../config";
 import ImageMosaicLoader from "../Loader/ImageMosaicLoader";
-
-// Add all categories, colors, and materials
-const categories = [
-    { id: "round-mortise-handle", name: "Round Mortise Handle" },
-    { id: "square-mortise-handle", name: "Square Mortise Handle" },
-    { id: "lock-body", name: "Lock Body" },
-    { id: "roller-body", name: "Roller Body" },
-    { id: "baby-latch", name: "Baby Latch" },
-    { id: "roller-latch", name: "Roller Latch" },
-];
-
-const colors = ["Matt", "Antique", "Jet Black", "Gold PVD", "Rose Gold PVD"];
-const materials = ["Stainless Steel", "Brass", "Zinc"];
 
 export default function ProductPage() {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [selectedColors, setSelectedColors] = useState([]);
     const [selectedMaterials, setSelectedMaterials] = useState([]);
-    const [products, setProducts] = useState([]);  // State to store fetched products
-    const [loading, setLoading] = useState(true);  // Loading state
-    const [error, setError] = useState(null);      // Error state
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [colors, setColors] = useState([]);
+    const [materials, setMaterials] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const wishlistItems = useSelector(state => state.wishlist.items);
 
-    // Fetch products from backend using Axios
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                setLoading(true); // Start loading
-                const response = await axios.get(`${API_URI}/plist/productlist`);  // Replace with your backend endpoint
-                setProducts(response.data); // Store products in state
-                setLoading(false); // Stop loading
+                setLoading(true);
+                const [productsRes, categoriesRes, colorsRes, materialsRes] = await Promise.all([
+                    axios.get(`${API_URI}/plist/productlist`),
+                    axios.get(`${API_URI}/categoryfilter/categories`),
+                    axios.get(`${API_URI}/colorfilter/colors`),
+                    axios.get(`${API_URI}/materialfilter/materials`)
+                ]);
+
+                setProducts(productsRes.data.products);
+                setCategories(categoriesRes.data);
+                setColors(colorsRes.data);
+                setMaterials(materialsRes.data);
+                setLoading(false);
             } catch (error) {
-                setError(error.message); // Handle error
+                setError(error.message);
                 setLoading(false);
             }
         };
 
-        fetchProducts();
+        fetchData();
     }, []);
 
+    // Rest of your existing component code remains the same...
     const handleCategoryChange = (category) => {
         setSelectedCategories((prev) =>
             prev.includes(category)
@@ -82,10 +81,9 @@ export default function ProductPage() {
     };
 
     const handleProductClick = (productId) => {
-        navigate(`/product/${productId}`); // Navigate to the ProductDetailPage with the product ID
+        navigate(`/product/${productId}`);
     };
 
-    // Filter products based on selected criteria
     const filteredProducts = products.filter((product) => {
         const categoryMatch = selectedCategories.length > 0 ? selectedCategories.includes(product.category) : true;
         const colorMatch = selectedColors.length > 0 ? selectedColors.includes(product.color) : true;
@@ -93,23 +91,17 @@ export default function ProductPage() {
         return categoryMatch && colorMatch && materialMatch;
     });
 
-    if (loading) {
-        return <ImageMosaicLoader/>; // Display loading state
-    }
-
-    if (error) {
-        return <div>Error: {error}</div>; // Display error state
-    }
+    if (loading) return <ImageMosaicLoader />;
+    if (error) return <div>Error: {error}</div>;
 
     const handleAddToCart = (product) => {
-        // Create a normalized product object
         const normalizedProduct = {
-            id: product._id, // Use _id from MongoDB as the id
+            id: product._id,
             name: product.name,
             price: product.price,
             description: product.description,
             images: product.images,
-            quantity: 1, // Initialize quantity
+            quantity: 1,
             color: product.color,
             material: product.material
         };
@@ -121,7 +113,7 @@ export default function ProductPage() {
             <aside className="w-64 bg-white p-6 shadow-md">
                 <h2 className="text-xl font-semibold mb-4">Categories</h2>
                 {categories.map((category) => (
-                    <div key={category.id} className="flex items-center space-x-2 mb-2">
+                    <div key={category._id} className="flex items-center space-x-2 mb-2">
                         <input
                             type="checkbox"
                             id={category.id}
@@ -134,28 +126,28 @@ export default function ProductPage() {
                 ))}
                 <h2 className="text-xl font-semibold mt-6 mb-4">Colors</h2>
                 {colors.map((color) => (
-                    <div key={color} className="flex items-center space-x-2 mb-2">
+                    <div key={color._id} className="flex items-center space-x-2 mb-2">
                         <input
                             type="checkbox"
-                            id={color}
-                            checked={selectedColors.includes(color)}
-                            onChange={() => handleColorChange(color)}
+                            id={color.name}
+                            checked={selectedColors.includes(color.name)}
+                            onChange={() => handleColorChange(color.name)}
                             className="h-4 w-4 text-blue-600"
                         />
-                        <label htmlFor={color} className="text-gray-700">{color}</label>
+                        <label htmlFor={color.name} className="text-gray-700">{color.name}</label>
                     </div>
                 ))}
                 <h2 className="text-xl font-semibold mt-6 mb-4">Materials</h2>
                 {materials.map((material) => (
-                    <div key={material} className="flex items-center space-x-2 mb-2">
+                    <div key={material._id} className="flex items-center space-x-2 mb-2">
                         <input
                             type="checkbox"
-                            id={material}
-                            checked={selectedMaterials.includes(material)}
-                            onChange={() => handleMaterialChange(material)}
+                            id={material.name}
+                            checked={selectedMaterials.includes(material.name)}
+                            onChange={() => handleMaterialChange(material.name)}
                             className="h-4 w-4 text-blue-600"
                         />
-                        <label htmlFor={material} className="text-gray-700">{material}</label>
+                        <label htmlFor={material.name} className="text-gray-700">{material.name}</label>
                     </div>
                 ))}
             </aside>
@@ -175,6 +167,11 @@ export default function ProductPage() {
                                 <div className="mt-4">
                                     <h3 className="text-lg font-semibold">{product.name}</h3>
                                     <p className="text-gray-600 mt-1">${product.price.toFixed(2)}</p>
+                                    <div
+                                        className="w-6 h-6 rounded-full mt-2"
+                                        style={{ backgroundColor: product.colorCode }}
+                                        title={product.color}
+                                    />
                                     <div className="mt-4 flex justify-between">
                                         <button
                                             className={`text-${wishlistItems.includes(product._id) ? "red-500" : "gray-500"}`}
