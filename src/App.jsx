@@ -14,28 +14,34 @@ import AddressSelectPage from './Components/Address/AddressSelectPage';
 import PaymentPage from './Components/Payment/PaymentPage';
 import WishlistPage from './Components/WishList/WishlistPage';
 import OrderPage from './Components/Orders/OrderPage';
+import OTPVerification from './Components/UserVerification/OTPVerification';
+import ResetPassword from './Components/UserVerification/ResetPassword';
+import { AuthProvider } from './Components/Contexts/AuthContext';
 
 function App() {
   return (
     <>
-      <Router>
-        <Routes>
-          <Route path="/" exact element={<Home />} />
-          <Route path="/login" exact element={<Login />} />
-          <Route path="/signup" exact element={<SignUp />} />
-          <Route path="/product" exact element={<Product/>} />
-          <Route path="/contactus" exact element={<ContactUs />} />
-          <Route path="/product/:productId" element={<ProductDetailPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/download" element={<DownloadPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/address" element={<AddressSelectPage />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/order" element={<OrderPage />} />
-        </Routes>
-      </Router>
-
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" exact element={<Home />} />
+            <Route path="/login" exact element={<Login />} />
+            <Route path="/signup" exact element={<SignUp />} />
+            <Route path="/product" exact element={<Product />} />
+            <Route path="/contactus" exact element={<ContactUs />} />
+            <Route path="/product/:productId" element={<ProductDetailPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/download" element={<DownloadPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/address" element={<AddressSelectPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/order" element={<OrderPage />} />
+            <Route path="/verify-otp" element={<OTPVerification />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </>
   )
 }

@@ -1,3 +1,4 @@
+// Signup.jsx
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
@@ -5,6 +6,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Loader from '../Loader/Loader';
+import { API_URI } from '../../../config';
 
 const Signup = () => {
     const {
@@ -17,19 +19,28 @@ const Signup = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const onSubmit = async (data) => {
+        if (data.password !== data.confirmPassword) {
+            alert("Passwords don't match");
+            return;
+        }
+
         setIsLoading(true);
         try {
-            const response = await axios.post('${API_URI}/auth/sign-up', data, { withCredentials: true });
-            console.log(response.data);
-            navigate('/');
+            // Request OTP first
+            await axios.post(`${API_URI}/auth/send-otp`, {
+                email: data.email
+            });
+
+            // Navigate to OTP verification with user data
+            navigate('/verify-otp', {
+                state: {
+                    name: data.name,
+                    email: data.email,
+                    password: data.password
+                }
+            });
         } catch (error) {
-            if (error.response) {
-                console.error('sign-up failed:', error.response.data.message);
-                alert('sign-up failed: ' + error.response.data.message);
-            } else {
-                console.error('sign-up failed:', error.message);
-                alert('sign-up failed: ' + error.message);
-            }
+            alert(error.response?.data?.error || 'Signup failed');
         } finally {
             setIsLoading(false);
         }

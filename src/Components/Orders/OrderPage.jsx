@@ -4,60 +4,6 @@ import { FaBox, FaShippingFast, FaCheckCircle, FaSpinner, FaTimes, FaCreditCard,
 import { useLocation } from 'react-router-dom';
 
 const OrderPage = () => {
-    // const [orders, setOrders] = useState([
-    //     {
-    //         id: "ORD123456",
-    //         date: "2024-03-20",
-    //         total: 599.98,
-    //         status: "Delivered",
-    //         items: [
-    //             {
-    //                 id: 1,
-    //                 name: "Gaming Laptop",
-    //                 price: 499.99,
-    //                 quantity: 1,
-    //                 image: "/api/placeholder/80/80"
-    //             },
-    //             {
-    //                 id: 2,
-    //                 name: "Gaming Mouse",
-    //                 price: 99.99,
-    //                 quantity: 1,
-    //                 image: "/api/placeholder/80/80"
-    //             }
-    //         ],
-    //         shippingAddress: {
-    //             street: "123 Main St",
-    //             city: "New York",
-    //             state: "NY",
-    //             zipCode: "10001"
-    //         },
-    //         paymentMethod: "Credit Card (**** 1234)"
-    //     },
-    //     {
-    //         id: "ORD123457",
-    //         date: "2024-03-15",
-    //         total: 299.99,
-    //         status: "In Transit",
-    //         items: [
-    //             {
-    //                 id: 3,
-    //                 name: "Mechanical Keyboard",
-    //                 price: 299.99,
-    //                 quantity: 1,
-    //                 image: "/api/placeholder/80/80"
-    //             }
-    //         ],
-    //         shippingAddress: {
-    //             street: "123 Main St",
-    //             city: "New York",
-    //             state: "NY",
-    //             zipCode: "10001"
-    //         },
-    //         paymentMethod: "PayPal"
-    //     }
-    // ]);
-
     const location = useLocation();
     const [orders, setOrders] = useState([
         // ... existing sample orders ...

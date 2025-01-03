@@ -106,8 +106,8 @@ const Navbar = () => {
                                         </>
                                     ) : (
                                         <>
-                                            <Link to="/login" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white" onClick={handleLogin}>Sign In</Link>
-                                            <Link to="/signup" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white" onClick={handleSignUp}>Sign Up</Link>
+                                            <Link to="/login" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg" onClick={handleLogin}>Sign In</Link>
+                                            <Link to="/signup" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg" onClick={handleSignUp}>Sign Up</Link>
                                         </>
                                     )}
                                 </div>

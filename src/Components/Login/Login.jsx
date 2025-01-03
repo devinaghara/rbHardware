@@ -22,7 +22,11 @@ const Login = () => {
         try {
             const response = await axios.post(`${API_URI}/auth/login`, data, { withCredentials: true });
             console.log(response.data);
-            navigate('/');
+            if (response.data.user.role == "admin") {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         } catch (error) {
             if (error.response) {
                 console.error('Login failed:', error.response.data.message);
@@ -36,8 +40,22 @@ const Login = () => {
         }
     };
 
+    const handleForgotPassword = async () => {
+        const email = prompt('Enter your email address');
+        if (!email) return;
+
+        setIsLoading(true);
+        try {
+            await axios.post(`${API_URI}/auth/forgot-password`, { email });
+            alert('Password reset link sent to your email');
+        } catch (error) {
+            alert(error.response?.data?.error || 'Failed to send reset link');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleGoogleLogin = () => {
-        // Add your Google login logic here
         console.log('Google login');
     };
 
@@ -51,10 +69,13 @@ const Login = () => {
                 style={{ backgroundColor: "#000000" }}
             >
                 {isLoading && <ImageMosaicLoader size={70} />}
-                <img
+                <motion.img
                     src="https://res.cloudinary.com/ddxe0b0kf/image/upload/v1720874424/dx22aboggirzfutgulei.jpg"
                     alt="Top Image"
                     className="mb-4 rounded-lg w-20 h-20 mx-auto"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
                 />
                 <h2 className="text-2xl font-bold text-center text-slate-50 mb-4">Login</h2>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -83,7 +104,12 @@ const Login = () => {
                         )}
                     </div>
                     <div className="text-right">
-                        <Link to="/forgot-password" className="text-sm text-orange-600 hover:underline">Forgot Password?</Link>
+                        <Link
+                            onClick={handleForgotPassword}
+                            className="text-sm text-orange-600 hover:underline"
+                        >
+                            Forgot Password?
+                        </Link>
                     </div>
                     <motion.button
                         type="submit"
