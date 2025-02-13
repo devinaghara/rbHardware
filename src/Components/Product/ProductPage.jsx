@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { FaHeart, FaShoppingCart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { addItem } from '../../Redux/actions/cartActions';
@@ -7,6 +6,7 @@ import { addToWishlist, removeFromWishlist } from '../../Redux/actions/wishlistA
 import axios from 'axios';
 import { API_URI } from "../../../config";
 import ImageMosaicLoader from "../Loader/ImageMosaicLoader";
+import ProductCard from './ProductCard';
 
 export default function ProductPage() {
     const [selectedCategories, setSelectedCategories] = useState([]);
@@ -20,7 +20,7 @@ export default function ProductPage() {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const wishlistItems = useSelector(state => state.wishlist.items);
+    const wishlistItems = useSelector(state => state.wishlist?.items || []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -33,7 +33,17 @@ export default function ProductPage() {
                     axios.get(`${API_URI}/materialfilter/materials`)
                 ]);
 
-                setProducts(productsRes.data.products);
+                const transformedProducts = productsRes.data.products.flatMap(product =>
+                    product.linkedProducts.map(linkedProduct => ({
+                        _id: product._id,
+                        productId: product.productId,
+                        category: product.category,
+                        material: product.material,
+                        ...linkedProduct
+                    }))
+                );
+
+                setProducts(transformedProducts);
                 setCategories(categoriesRes.data);
                 setColors(colorsRes.data);
                 setMaterials(materialsRes.data);
@@ -47,52 +57,42 @@ export default function ProductPage() {
         fetchData();
     }, []);
 
-    // Rest of your existing component code remains the same...
-    const handleCategoryChange = (category) => {
-        setSelectedCategories((prev) =>
-            prev.includes(category)
-                ? prev.filter((c) => c !== category)
-                : [...prev, category]
+    const handleCategoryChange = (categoryName) => {
+        setSelectedCategories(prev =>
+            prev.includes(categoryName)
+                ? prev.filter(c => c !== categoryName)
+                : [...prev, categoryName]
         );
     };
 
     const handleColorChange = (color) => {
-        setSelectedColors((prev) =>
+        setSelectedColors(prev =>
             prev.includes(color)
-                ? prev.filter((c) => c !== color)
+                ? prev.filter(c => c !== color)
                 : [...prev, color]
         );
     };
 
     const handleMaterialChange = (material) => {
-        setSelectedMaterials((prev) =>
+        setSelectedMaterials(prev =>
             prev.includes(material)
-                ? prev.filter((m) => m !== material)
+                ? prev.filter(m => m !== material)
                 : [...prev, material]
         );
     };
 
-    const toggleWishlist = (productId) => {
-        if (wishlistItems.includes(productId)) {
-            dispatch(removeFromWishlist(productId));
+    const toggleWishlist = (product) => {
+        const variantId = product._id;
+        if (wishlistItems.includes(variantId)) {
+            dispatch(removeFromWishlist(variantId));
         } else {
-            dispatch(addToWishlist(productId));
+            dispatch(addToWishlist(variantId));
         }
     };
 
     const handleProductClick = (productId) => {
         navigate(`/product/${productId}`);
     };
-
-    const filteredProducts = products.filter((product) => {
-        const categoryMatch = selectedCategories.length > 0 ? selectedCategories.includes(product.category) : true;
-        const colorMatch = selectedColors.length > 0 ? selectedColors.includes(product.color) : true;
-        const materialMatch = selectedMaterials.length > 0 ? selectedMaterials.includes(product.material) : true;
-        return categoryMatch && colorMatch && materialMatch;
-    });
-
-    if (loading) return <ImageMosaicLoader />;
-    if (error) return <div>Error: {error}</div>;
 
     const handleAddToCart = (product) => {
         const normalizedProduct = {
@@ -108,90 +108,102 @@ export default function ProductPage() {
         dispatch(addItem(normalizedProduct));
     };
 
+    const filteredProducts = products.filter(product => {
+        const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+        const colorMatch = selectedColors.length === 0 || selectedColors.includes(product.color);
+        const materialMatch = selectedMaterials.length === 0 || selectedMaterials.includes(product.material);
+        return categoryMatch && colorMatch && materialMatch;
+    });
+
+    if (loading) return <ImageMosaicLoader />;
+    if (error) return <div>Error: {error}</div>;
+
     return (
         <div className="flex min-h-screen bg-gray-100 mt-20">
-            <aside className="w-64 bg-white p-6 shadow-md">
-                <h2 className="text-xl font-semibold mb-4">Categories</h2>
-                {categories.map((category) => (
-                    <div key={category._id} className="flex items-center space-x-2 mb-2">
-                        <input
-                            type="checkbox"
-                            id={category.id}
-                            checked={selectedCategories.includes(category.id)}
-                            onChange={() => handleCategoryChange(category.id)}
-                            className="h-4 w-4 text-blue-600"
-                        />
-                        <label htmlFor={category.id} className="text-gray-700">{category.name}</label>
+            {/* Filters Sidebar */}
+            <aside className="w-64 bg-white p-6 shadow-md sticky top-20 h-screen overflow-y-auto">
+                {/* Categories */}
+                <div className="mb-8">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-800">Categories</h2>
+                    <div className="space-y-2">
+                        {categories.map((category) => (
+                            <div key={category._id} className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id={category._id}
+                                    checked={selectedCategories.includes(category.name)}
+                                    onChange={() => handleCategoryChange(category.name)}
+                                    className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                                />
+                                <label htmlFor={category._id} className="text-gray-700 text-sm">{category.name}</label>
+                            </div>
+                        ))}
                     </div>
-                ))}
-                <h2 className="text-xl font-semibold mt-6 mb-4">Colors</h2>
-                {colors.map((color) => (
-                    <div key={color._id} className="flex items-center space-x-2 mb-2">
-                        <input
-                            type="checkbox"
-                            id={color.name}
-                            checked={selectedColors.includes(color.name)}
-                            onChange={() => handleColorChange(color.name)}
-                            className="h-4 w-4 text-blue-600"
-                        />
-                        <label htmlFor={color.name} className="text-gray-700">{color.name}</label>
+                </div>
+
+                {/* Colors */}
+                <div className="mb-8">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-800">Colors</h2>
+                    <div className="space-y-2">
+                        {colors.map((color) => (
+                            <div key={color._id} className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id={color._id}
+                                    checked={selectedColors.includes(color.name)}
+                                    onChange={() => handleColorChange(color.name)}
+                                    className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                                />
+                                <label htmlFor={color._id} className="text-gray-700 text-sm">{color.name}</label>
+                            </div>
+                        ))}
                     </div>
-                ))}
-                <h2 className="text-xl font-semibold mt-6 mb-4">Materials</h2>
-                {materials.map((material) => (
-                    <div key={material._id} className="flex items-center space-x-2 mb-2">
-                        <input
-                            type="checkbox"
-                            id={material.name}
-                            checked={selectedMaterials.includes(material.name)}
-                            onChange={() => handleMaterialChange(material.name)}
-                            className="h-4 w-4 text-blue-600"
-                        />
-                        <label htmlFor={material.name} className="text-gray-700">{material.name}</label>
+                </div>
+
+                {/* Materials */}
+                <div className="mb-8">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-800">Materials</h2>
+                    <div className="space-y-2">
+                        {materials.map((material) => (
+                            <div key={material._id} className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id={material._id}
+                                    checked={selectedMaterials.includes(material.name)}
+                                    onChange={() => handleMaterialChange(material.name)}
+                                    className="h-4 w-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                                />
+                                <label htmlFor={material._id} className="text-gray-700 text-sm">{material.name}</label>
+                            </div>
+                        ))}
                     </div>
-                ))}
+                </div>
             </aside>
 
+            {/* Main Content */}
             <main className="flex-1 p-8">
-                <h1 className="text-2xl font-bold mb-6">Products</h1>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredProducts.length > 0 ? (
-                        filteredProducts.map((product) => (
-                            <div key={product._id} className="bg-white p-4 rounded-lg shadow-md">
-                                <img
-                                    src={product.images[0]}
-                                    alt={product.name}
-                                    className="w-full h-45 object-cover rounded-t-lg cursor-pointer"
-                                    onClick={() => handleProductClick(product._id)}
+                <div className="max-w-7xl mx-auto">
+                    <h1 className="text-3xl font-bold mb-8 text-gray-800">Products</h1>
+                    
+                    {/* Product Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredProducts.length > 0 ? (
+                            filteredProducts.map((product) => (
+                                <ProductCard
+                                    key={`${product._id}-${product.color}`}
+                                    product={product}
+                                    onProductClick={handleProductClick}
+                                    onToggleWishlist={toggleWishlist}
+                                    isWishlisted={wishlistItems.includes(product._id)}
+                                    onAddToCart={handleAddToCart}
                                 />
-                                <div className="mt-4">
-                                    <h3 className="text-lg font-semibold">{product.name}</h3>
-                                    <p className="text-gray-600 mt-1">${product.price.toFixed(2)}</p>
-                                    <div
-                                        className="w-6 h-6 rounded-full mt-2"
-                                        style={{ backgroundColor: product.colorCode }}
-                                        title={product.color}
-                                    />
-                                    <div className="mt-4 flex justify-between">
-                                        <button
-                                            className={`text-${wishlistItems.includes(product._id) ? "red-500" : "gray-500"}`}
-                                            onClick={() => toggleWishlist(product._id)}
-                                        >
-                                            <FaHeart />
-                                        </button>
-                                        <button
-                                            className="text-green-500"
-                                            onClick={() => handleAddToCart(product)}
-                                        >
-                                            <FaShoppingCart />
-                                        </button>
-                                    </div>
-                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-10">
+                                <p className="text-gray-500 text-lg">No products found matching the selected criteria.</p>
                             </div>
-                        ))
-                    ) : (
-                        <p>No products found matching the selected criteria.</p>
-                    )}
+                        )}
+                    </div>
                 </div>
             </main>
         </div>

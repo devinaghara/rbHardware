@@ -4,104 +4,137 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../Landing/Navbar";
 import { useDispatch, useSelector } from 'react-redux';
-import { addItem, removeItem } from '../../Redux/actions/cartActions';
+import { addItem, removeItem, updateQuantity } from '../../Redux/actions/cartActions';
 import { addToWishlist, removeFromWishlist } from '../../Redux/actions/wishlistAction';
 import { API_URI } from "../../../config";
 import ImageMosaicLoader from "../Loader/ImageMosaicLoader";
 
 export default function ProductDetailPage() {
-    const { productId } = useParams();  // Get product ID from URL
+    const { productId } = useParams();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [product, setProduct] = useState(null);
     const [selectedImage, setSelectedImage] = useState("");
-    const [selectedColor, setSelectedColor] = useState("");
     const [linkedProducts, setLinkedProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const cartItems = useSelector(state => state.cart.items);
-    const wishlistItems = useSelector(state => state.wishlist.items);
-    const cartItem = cartItems.find(item => item.id === productId);
-    const isInWishlist = wishlistItems.includes(productId);
 
-    // Fetch product details from backend API
+    const wishlistItems = useSelector(state => state.wishlist?.items || []);
+    // const isInWishlist = product ? (wishlistItems || []).includes(product.mainProductId) : false;
+    const isInWishlist = product ? wishlistItems.includes(product._id) : false;
+    // Update cart item finding logic to match with both id and color
+    const cartItem = cartItems.find(item =>
+        (item.id === product?._id || item._id === product?._id) &&
+        item.color === product?.color
+    );
+
+    // console.log(product)
+
     useEffect(() => {
-        const fetchProductAndVariants = async () => {
+        const fetchProductDetails = async () => {
             try {
+                setLoading(true);
+                setError(null);
+
                 const response = await axios.get(`${API_URI}/plist/productlist/${productId}`);
-                const fetchedProduct = response.data.product;
-                setProduct(fetchedProduct);
-                setSelectedImage(fetchedProduct.images[0]);
-                setSelectedColor(fetchedProduct.color);
 
-                // First, add current product to linked products array
-                const currentProductColor = {
-                    productId: fetchedProduct._id,
-                    color: fetchedProduct.color,
-                    colorCode: fetchedProduct.colorCode
-                };
-
-                // If there are linked products, fetch their details
-                if (fetchedProduct.linkedProducts && fetchedProduct.linkedProducts.length > 0) {
-                    try {
-                        // Fetch all linked products' details
-                        const linkedProductsPromises = fetchedProduct.linkedProducts.map(linkedId =>
-                            axios.get(`${API_URI}/plist/productlist/${linkedId}`)
-                        );
-                        const linkedProductsResponses = await Promise.all(linkedProductsPromises);
-
-                        // Extract and format linked products data
-                        const linkedProductsData = linkedProductsResponses.map(response => ({
-                            productId: response.data.product._id,
-                            color: response.data.product.color,
-                            colorCode: response.data.product.colorCode
-                        }));
-
-                        // Combine current product with linked products
-                        setLinkedProducts([currentProductColor, ...linkedProductsData]);
-                    } catch (error) {
-                        console.error("Error fetching linked products:", error);
-                    }
-                } else {
-                    // If no linked products, just set the current product
-                    setLinkedProducts([currentProductColor]);
+                if (!response.data || !response.data.product) {
+                    throw new Error('Product data is missing or invalid');
                 }
+
+                const mainProduct = response.data.product;
+                const currentVariant = mainProduct.linkedProducts.find(
+                    variant => variant._id === productId
+                ) || mainProduct.linkedProducts[0];
+
+                console.log("Current variant id", currentVariant._id)
+
+                setProduct({
+                    _id: currentVariant._id,  // This will give you the variant ID like "678e81ee503cd72b13a19cbc"
+                    mainProductId: mainProduct._id,  // Keep main product ID if needed
+                    productId: mainProduct.productId,
+                    name: currentVariant.name,
+                    price: currentVariant.price,
+                    images: currentVariant.images,
+                    color: currentVariant.color,
+                    colorCode: currentVariant.colorCode,
+                    description: currentVariant.description,
+                    category: mainProduct.category,
+                    material: mainProduct.material
+                });
+
+                setSelectedImage(currentVariant.images[0]);
+
+                const variants = mainProduct.linkedProducts.map(variant => ({
+                    productId: mainProduct._id,
+                    variantId: variant._id,
+                    color: variant.color,
+                    colorCode: variant.colorCode,
+                    name: variant.name,
+                    price: variant.price,
+                    images: variant.images,
+                    description: variant.description
+                }));
+
+                setLinkedProducts(variants);
 
             } catch (error) {
                 console.error("Error fetching product details:", error);
-                navigate("/product");
+                setError(error.message || 'Failed to fetch product details');
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchProductAndVariants();
-    }, [productId, navigate]);
-
-
-    if (!product) {
-        return <ImageMosaicLoader />;
-    }
-
-    const handleColorChange = (id) => {
-        if (id !== product._id) {
-            navigate(`/product/${id}`);
+        if (productId) {
+            fetchProductDetails();
         }
+    }, [productId]);
+
+    if (loading) return <ImageMosaicLoader />;
+    if (error) return <div className="text-center mt-20 text-red-500">Error: {error}</div>;
+    if (!product) return <div className="text-center mt-20">Product not found</div>;
+
+    const handleColorChange = (colorVariant) => {
+        setProduct(prev => ({
+            ...prev,
+            ...colorVariant
+        }));
+        setSelectedImage(colorVariant.images[0]);
     };
 
     const addToCart = () => {
         if (product) {
             const cartProduct = {
-                ...product,
-                id: product._id, // Ensure we're using the MongoDB _id
+                id: product._id,
+                name: product.name,
+                price: product.price,
+                description: product.description,
+                images: product.images,
+                color: product.color,
+                colorCode: product.colorCode,
+                material: product.material,
+                category: product.category,
                 quantity: 1
             };
             dispatch(addItem(cartProduct));
         }
     };
-    const removeFromCart = () => dispatch(removeItem(productId));
+
+    const removeFromCart = () => {
+        if (product && cartItem) {
+            dispatch(updateQuantity(`${product._id}-${product.color}`, cartItem.quantity - 1));
+        }
+    };
+
     const toggleWishlist = () => {
+        if (!product) return;
         if (isInWishlist) {
-            dispatch(removeFromWishlist(productId));
+            dispatch(removeFromWishlist(product._id));  // Using variant ID
         } else {
-            dispatch(addToWishlist(productId));
+            dispatch(addToWishlist(product._id));  // Using variant ID
         }
     };
 
@@ -109,7 +142,7 @@ export default function ProductDetailPage() {
         <>
             <Navbar />
             <div className="min-h-screen flex mt-20 bg-gray-100">
-                {/* Image section remains the same */}
+                {/* Left side - Images */}
                 <div className="w-1/3 p-6">
                     <img
                         src={selectedImage}
@@ -130,30 +163,30 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
 
+                {/* Right side - Product details */}
                 <div className="w-2/3 p-6 bg-white shadow-lg rounded-lg">
-                    {/* Product details */}
                     <h1 className="text-3xl font-semibold mb-4">{product.name}</h1>
-                    <p className="text-xl text-gray-700 mb-2">${product.price.toFixed(2)}</p>
+                    <p className="text-xl text-gray-700 mb-2">₹{product.price.toFixed(2)}</p>
                     <p className="text-gray-600">{product.description}</p>
 
+                    {/* Color variants */}
                     <div className="my-4">
                         <h2 className="text-lg font-semibold">Available Colors:</h2>
                         <div className="flex space-x-4 mt-2">
                             {linkedProducts.map((variant) => (
                                 <div
-                                    key={variant.productId}
-                                    className={`relative cursor-pointer group`}
-                                    onClick={() => handleColorChange(variant.productId)}
+                                    key={`${variant.productId}-${variant.color}`}
+                                    className="relative cursor-pointer group"
+                                    onClick={() => handleColorChange(variant)}
                                 >
                                     <div
-                                        className={`w-8 h-8 rounded-full ${product._id === variant.productId ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                                        className={`w-8 h-8 rounded-full ${product.color === variant.color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
                                             }`}
                                         style={{ backgroundColor: variant.colorCode }}
                                     />
-                                    {/* Color name tooltip */}
                                     <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 
-                    bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 
-                    transition-opacity duration-200 mb-2 whitespace-nowrap">
+                                        bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 
+                                        transition-opacity duration-200 mb-2 whitespace-nowrap">
                                         {variant.color}
                                     </span>
                                 </div>
@@ -161,6 +194,7 @@ export default function ProductDetailPage() {
                         </div>
                     </div>
 
+                    {/* Cart and wishlist actions */}
                     <div className="flex space-x-4 my-4">
                         {cartItem ? (
                             <div className="flex items-center space-x-4">

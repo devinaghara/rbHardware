@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaTrash, FaPlus, FaMinus, FaArrowLeft, FaShoppingCart } from 'react-icons/fa';
-import { addItem, removeItem } from '../../Redux/actions/cartActions';
+import { addItem, removeItem, updateQuantity } from '../../Redux/actions/cartActions';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../Landing/Navbar';
 
@@ -12,18 +12,19 @@ const CartPage = () => {
     const navigate = useNavigate();
 
     const handleIncreaseQuantity = (item) => {
-        dispatch(addItem(item));
+        dispatch(updateQuantity(`${item.id}-${item.color}`, item.quantity + 1));
     };
-
-    const handleDecreaseQuantity = (itemId) => {
-        dispatch(removeItem(itemId));
-    };
-
-    const handleRemoveItem = (itemId) => {
-        const item = cartItems.find(item => item.id === itemId);
-        for (let i = 0; i < item.quantity; i++) {
-            dispatch(removeItem(itemId));
+    
+    const handleDecreaseQuantity = (item) => {
+        if (item.quantity > 1) {
+            dispatch(updateQuantity(`${item.id}-${item.color}`, item.quantity - 1));
+        } else {
+            dispatch(updateQuantity(`${item.id}-${item.color}`, 0));
         }
+    };
+    
+    const handleRemoveItem = (item) => {
+        dispatch(updateQuantity(`${item.id}-${item.color}`, 0));
     };
 
     const handleProceedToPay = () => {
@@ -35,7 +36,6 @@ const CartPage = () => {
     };
 
     return (
-        // <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black">
         <div className="min-h-screen bg-white">
             <Navbar />
             <div className="container mx-auto px-4 py-12 mt-10">
@@ -58,7 +58,7 @@ const CartPage = () => {
                         <div className="lg:col-span-2">
                             <div className="bg-black bg-opacity-90 backdrop-filter rounded-2xl overflow-hidden shadow-xl border border-orange-500 border-opacity-20">
                                 {cartItems.map((item) => (
-                                    <div key={item.id} className="flex flex-col sm:flex-row items-center justify-between p-6 border-b border-orange-500 border-opacity-20 last:border-b-0">
+                                    <div key={`${item.id}-${item.color}`} className="flex flex-col sm:flex-row items-center justify-between p-6 border-b border-orange-500 border-opacity-20 last:border-b-0">
                                         <div className="flex items-center space-x-6 mb-4 sm:mb-0">
                                             <img src={item.images[0]} alt={item.name} className="w-28 h-28 object-cover rounded-lg shadow-md" />
                                             <div>
@@ -70,7 +70,7 @@ const CartPage = () => {
                                         <div className="flex items-center space-x-6">
                                             <div className="flex items-center space-x-2 bg-gray-700 rounded-full px-2 py-1 shadow-md">
                                                 <button
-                                                    onClick={() => handleDecreaseQuantity(item.id)}
+                                                    onClick={() => handleDecreaseQuantity(item)}
                                                     className="text-orange-400 hover:text-orange-300 focus:outline-none"
                                                 >
                                                     <FaMinus className="h-4 w-4" />
@@ -84,7 +84,7 @@ const CartPage = () => {
                                                 </button>
                                             </div>
                                             <button
-                                                onClick={() => handleRemoveItem(item.id)}
+                                                onClick={() => handleRemoveItem(item)}
                                                 className="text-orange-500 hover:text-orange-400 focus:outline-none transition duration-300 transform hover:scale-110"
                                             >
                                                 <FaTrash className="h-5 w-5" />

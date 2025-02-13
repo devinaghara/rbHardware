@@ -1,8 +1,10 @@
+// Login.jsx
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import ImageMosaicLoader from '../Loader/ImageMosaicLoader';
 import { API_URI } from '../../../config';
@@ -16,7 +18,8 @@ const Login = () => {
 
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
-
+    const [showPassword, setShowPassword] = useState(false);
+    
     const onSubmit = async (data) => {
         setIsLoading(true);
         try {

@@ -17,6 +17,7 @@ import OrderPage from './Components/Orders/OrderPage';
 import OTPVerification from './Components/UserVerification/OTPVerification';
 import ResetPassword from './Components/UserVerification/ResetPassword';
 import { AuthProvider } from './Components/Contexts/AuthContext';
+import AdminDashboard from './Components/Admin/AdminDashboard';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             <Route path="/order" element={<OrderPage />} />
             <Route path="/verify-otp" element={<OTPVerification />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </Router>
       </AuthProvider>

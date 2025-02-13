@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaTrash, FaShoppingCart, FaPlus, FaMinus } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
 import { removeFromWishlist } from '../../Redux/actions/wishlistAction';
-import { addItem, removeItem } from '../../Redux/actions/cartActions';
+import { addItem, removeItem, updateQuantity } from '../../Redux/actions/cartActions';
 import Navbar from "../Landing/Navbar";
 import axios from "axios";
 import { API_URI } from "../../../config";
@@ -23,36 +23,38 @@ export default function WishlistPage() {
             try {
                 setLoading(true);
                 setError(null);
-
+    
+                const validProductIds = wishlistItems.filter(id => id != null);
+    
                 const productsData = await Promise.all(
-                    wishlistItems.map(async productId => {
+                    validProductIds.map(async productId => {
                         try {
                             const response = await axios.get(`${API_URI}/plist/productlist/${productId}`);
-                            // Check if response has data property
-                            if (response.data) {
-                                return response.data;
-                            }
-                            console.error(`No data for product ${productId}`);
-                            return null;
+                            if (!response.data?.product) return null;
+    
+                            const product = response.data.product;
+                            // Find the specific variant if the ID matches a variant
+                            const variant = product.linkedProducts.find(v => v._id === productId) || product.linkedProducts[0];
+    
+                            return {
+                                _id: productId, // Use the actual wishlist item ID
+                                mainProductId: product._id, // Store the main product ID separately
+                                name: variant.name,
+                                price: variant.price,
+                                images: variant.images,
+                                description: variant.description,
+                                color: variant.color,
+                                category: product.category,
+                                material: product.material
+                            };
                         } catch (err) {
                             console.error(`Error fetching product ${productId}:`, err);
                             return null;
                         }
                     })
                 );
-
-                // Log for debugging
-                console.log('Fetched products:', productsData);
-
-                // Filter out null responses and set products
-                const validProducts = productsData.filter(product =>
-                    product !== null && product._id && product.name
-                );
-                console.log(validProducts)
-                if (validProducts.length === 0 && wishlistItems.length > 0) {
-                    setError("Unable to load wishlist products. Please try again.");
-                }
-
+    
+                const validProducts = productsData.filter(product => product !== null);
                 setWishlistProducts(validProducts);
             } catch (error) {
                 console.error("Error fetching wishlist products:", error);
@@ -61,8 +63,8 @@ export default function WishlistPage() {
                 setLoading(false);
             }
         };
-
-        if (wishlistItems.length > 0) {
+    
+        if (wishlistItems?.length > 0) {
             fetchWishlistProducts();
         } else {
             setWishlistProducts([]);
@@ -79,23 +81,26 @@ export default function WishlistPage() {
         }
     };
 
-    const handleAddToCart = async (product) => {
+    const handleAddToCart = (product) => {
         try {
             setIsUpdatingCart(true);
             // Check if product is already in cart
-            const existingCartItem = cartItems.find(item => item._id === product._id);
-
+            const existingCartItem = cartItems.find(item =>
+                `${item.id}-${item.color}` === `${product._id}-${product.color}`
+            );
+    
             if (existingCartItem) {
-                // If product exists, increment quantity
-                dispatch(addItem({
-                    ...product,
-                    quantity: existingCartItem.quantity + 1
-                }));
+                // If product exists, update quantity
+                dispatch(updateQuantity(
+                    `${product._id}-${product.color}`,
+                    existingCartItem.quantity + 1
+                ));
             } else {
                 // If product doesn't exist, add with quantity 1
                 dispatch(addItem({
                     ...product,
-                    quantity: 1
+                    quantity: 1,
+                    id: product._id
                 }));
             }
         } catch (error) {
@@ -105,21 +110,19 @@ export default function WishlistPage() {
             setIsUpdatingCart(false);
         }
     };
-
-    const handleRemoveFromCart = async (productId) => {
+    
+    const handleRemoveFromCart = (product) => {
         try {
             setIsUpdatingCart(true);
-            const existingCartItem = cartItems.find(item => item._id === productId);
-
-            if (existingCartItem && existingCartItem.quantity > 1) {
-                // If quantity > 1, just decrement
-                dispatch(addItem({
-                    ...existingCartItem,
-                    quantity: existingCartItem.quantity - 1
-                }));
-            } else {
-                // If quantity is 1, remove item completely
-                dispatch(removeItem(productId));
+            const existingCartItem = cartItems.find(item =>
+                `${item.id}-${item.color}` === `${product._id}-${product.color}`
+            );
+    
+            if (existingCartItem) {
+                dispatch(updateQuantity(
+                    `${product._id}-${product.color}`,
+                    existingCartItem.quantity - 1
+                ));
             }
         } catch (error) {
             console.error("Error removing from cart:", error);
@@ -152,8 +155,8 @@ export default function WishlistPage() {
             <div className="min-h-screen bg-gray-100 pt-20">
                 {error && (
                     <div className="max-w-7xl mx-auto px-4 mb-4">
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                            {error}
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                            <span className="block sm:inline">{error}</span>
                         </div>
                     </div>
                 )}
@@ -165,7 +168,7 @@ export default function WishlistPage() {
                         <div className="bg-white rounded-lg shadow p-6 text-center">
                             <p className="text-gray-500 text-lg">Your wishlist is empty</p>
                             <button
-                                className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600"
+                                className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition duration-300"
                                 onClick={() => navigate('/product')}
                             >
                                 Continue Shopping
@@ -174,11 +177,9 @@ export default function WishlistPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {wishlistProducts.map((product) => {
-                                if (!product || !product.images || !product.images.length) {
-                                    return null;
-                                }
-
-                                const cartItem = cartItems.find(item => item._id === product._id);
+                                const cartItem = cartItems.find(item =>
+                                    (item._id === product._id) || (item.id === product._id)
+                                );
 
                                 return (
                                     <div key={product._id} className="bg-white rounded-lg shadow overflow-hidden">
@@ -188,13 +189,13 @@ export default function WishlistPage() {
                                             className="w-full h-48 object-cover cursor-pointer"
                                             onClick={() => handleProductClick(product._id)}
                                             onError={(e) => {
-                                                e.target.src = 'path/to/fallback/image.jpg'; // Add a fallback image
-                                                e.target.onerror = null; // Prevent infinite loop
+                                                e.target.src = '/path/to/fallback/image.jpg';
+                                                e.target.onerror = null;
                                             }}
                                         />
                                         <div className="p-4">
                                             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                                {product.name || 'Unknown Product'}
+                                                {product.name}
                                             </h3>
                                             <p className="text-gray-600 mb-2">
                                                 ${(product.price || 0).toFixed(2)}
@@ -221,7 +222,7 @@ export default function WishlistPage() {
                                                         </div>
                                                     ) : (
                                                         <button
-                                                            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50"
+                                                            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50 transition duration-300"
                                                             onClick={() => handleAddToCart(product)}
                                                             disabled={isUpdatingCart}
                                                         >
@@ -232,7 +233,7 @@ export default function WishlistPage() {
                                                 </div>
                                                 <button
                                                     onClick={() => handleRemoveFromWishlist(product._id)}
-                                                    className="p-2 text-red-500 hover:text-red-600 disabled:opacity-50"
+                                                    className="p-2 text-red-500 hover:text-red-600 disabled:opacity-50 transition duration-300"
                                                     disabled={isUpdatingCart}
                                                 >
                                                     <FaTrash />

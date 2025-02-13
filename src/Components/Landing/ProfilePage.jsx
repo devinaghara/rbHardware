@@ -229,8 +229,8 @@ const ProfilePage = () => {
                 return <OrderPage />;
             case 'addresses':
                 return <AddressManagement />;
-            case 'settings':
-                return renderSettings();
+            // case 'settings':
+            //     return renderSettings();
             default:
                 return null;
         }
@@ -241,7 +241,7 @@ const ProfilePage = () => {
         { id: 'profile', icon: FaUser, label: 'Profile' },
         { id: 'orders', icon: FaBoxOpen, label: 'Orders' },
         { id: 'addresses', icon: FaAddressCard, label: 'Addresses' },
-        { id: 'settings', icon: FaCog, label: 'Settings' },
+        // { id: 'settings', icon: FaCog, label: 'Settings' },
     ];
 
     return (

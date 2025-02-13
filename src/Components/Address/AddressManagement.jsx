@@ -136,7 +136,7 @@ const AddressManagement = () => {
                                         onChange={e => setNewAddress({...newAddress, type: e.target.value})}
                                     >
                                         <option>Home</option>
-                                        <option>Office</option>
+                                        <option>Work</option>
                                         <option>Other</option>
                                     </select>
                                 </div>

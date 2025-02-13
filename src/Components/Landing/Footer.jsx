@@ -53,10 +53,10 @@ const Footer = () => {
 
                     {/* Social Media Icons */}
                     <div className="flex items-center space-x-4">
-                        <a href="https://www.instagram.com/rbhardwareindia?igsh=MWx5NDl5bjZzZ3Nydw==" target="_blank" rel="noopener noreferrer">
+                        <a href="https://www.instagram.com/rbhardwareindia/?utm_source=ig_web_button_share_sheet" target="_blank" rel="noopener noreferrer">
                             <FaInstagram className="text-white text-2xl" />
                         </a>
-                        <a href="https://wa.me/" target="_blank" rel="noopener noreferrer">
+                        <a href="https://wa.me/c/917698100040" target="_blank" rel="noopener noreferrer">
                             <FaWhatsapp className="text-white text-2xl" />
                         </a>
                     </div>
