@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaShoppingCart } from 'react-icons/fa';
 import { CgProfile } from "react-icons/cg";
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { API_URI } from '../../../config';
+import { fetchCart } from '../../Redux/actions/cartActions'; // Import the action
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -13,30 +14,34 @@ const Navbar = () => {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
 
-    const cartCount = useSelector((state) => state.cart.totalQuantity);
+    // Get cart items from Redux store
+    const cartItems = useSelector((state) => state.cart.items) || [];
+    
+    // Calculate total quantity from cart items
+    const cartCount = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
 
     // Check if user is logged in using axios
     useEffect(() => {
         const checkLoginStatus = async () => {
             try {
                 const response = await axios.get(`${API_URI}/auth/me`, { withCredentials: true });
-                // print(response)
-                // console.log(response.body)
-                if (response.status = 200) {
+                if (response.status === 200) {
                     setIsLoggedIn(true);
+                    // Fetch cart when user is logged in
+                    dispatch(fetchCart());
                 }
                 else {
                     setIsLoggedIn(false);
                 }
             } catch (error) {
-                // console.error('Failed to check login status:', );
                 setIsLoggedIn(false);
             }
         };
 
         checkLoginStatus();
-    }, []);
+    }, [dispatch]);
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -88,7 +93,9 @@ const Navbar = () => {
                     <div className="hidden md:flex items-center space-x-3 relative">
                         <Link to="/cart" className="py-2 px-5 font-medium text-white rounded hover:bg-orange-500 hover:text-white transition duration-300 relative">
                             <FaShoppingCart className="text-xl" />
-                            <span className="absolute top-0 right-0 inline-block w-6 h-6 text-center text-white bg-orange-500 rounded-full">{cartCount}</span>
+                            <span className="absolute top-0 right-0 inline-block w-6 h-6 text-center text-white bg-orange-500 rounded-full">
+                                {cartCount}
+                            </span>
                         </Link>
                         <div className="relative">
                             <CgProfile
@@ -99,10 +106,10 @@ const Navbar = () => {
                                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-xl z-20">
                                     {isLoggedIn ? (
                                         <>
-                                            <Link to="/profile" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white">Your Profile</Link>
-                                            <Link to="/wishlist" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white">Your Wishlist</Link>
-                                            <Link to="/order" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white">Your Order</Link>
-                                            <button className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white" onClick={handleLogout}>Logout</button>
+                                            <Link to="/profile" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg">Your Profile</Link>
+                                            <Link to="/wishlist" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg">Your Wishlist</Link>
+                                            <Link to="/order" className="block px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg">Your Order</Link>
+                                            <button className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-orange-500 hover:text-white hover:border rounded-lg" onClick={handleLogout}>Logout</button>
                                         </>
                                     ) : (
                                         <>
@@ -115,8 +122,14 @@ const Navbar = () => {
                         </div>
                     </div>
                     <div className="md:hidden flex items-center">
+                        <Link to="/cart" className="mr-4 relative">
+                            <FaShoppingCart className="text-xl text-white" />
+                            <span className="absolute -top-2 -right-2 inline-block w-5 h-5 text-center text-xs text-white bg-orange-500 rounded-full">
+                                {cartCount}
+                            </span>
+                        </Link>
                         <button className="outline-none mobile-menu-button" onClick={toggleMenu}>
-                            <svg className="w-6 h-6 text-gray-500 hover:text-orange-500"
+                            <svg className="w-6 h-6 text-white hover:text-orange-500"
                                 fill="none"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -133,8 +146,21 @@ const Navbar = () => {
                 <ul>
                     <li><Link to="/" className={`block text-sm px-2 py-4 ${location.pathname === '/' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Home</Link></li>
                     <li><Link to="/product" className={`block text-sm px-2 py-4 ${location.pathname === '/product' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Shop</Link></li>
-                    <li><Link to="/about" className={`block text-sm px-2 py-4 ${location.pathname === '/about' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>About</Link></li>
+                    <li><Link to="/download" className={`block text-sm px-2 py-4 ${location.pathname === '/download' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Download</Link></li>
                     <li><Link to="/contactus" className={`block text-sm px-2 py-4 ${location.pathname === '/contactus' ? 'text-black bg-orange-500 font-semibold' : 'text-black hover:bg-orange-500 hover:text-white transition duration-300'}`}>Contact</Link></li>
+                    {isLoggedIn ? (
+                        <>
+                            <li><Link to="/profile" className="block text-sm px-2 py-4 text-black hover:bg-orange-500 hover:text-white">Your Profile</Link></li>
+                            <li><Link to="/wishlist" className="block text-sm px-2 py-4 text-black hover:bg-orange-500 hover:text-white">Your Wishlist</Link></li>
+                            <li><Link to="/order" className="block text-sm px-2 py-4 text-black hover:bg-orange-500 hover:text-white">Your Order</Link></li>
+                            <li><button className="block w-full text-left text-sm px-2 py-4 text-black hover:bg-orange-500 hover:text-white" onClick={handleLogout}>Logout</button></li>
+                        </>
+                    ) : (
+                        <>
+                            <li><Link to="/login" className="block text-sm px-2 py-4 text-black hover:bg-orange-500 hover:text-white">Sign In</Link></li>
+                            <li><Link to="/signup" className="block text-sm px-2 py-4 text-black hover:bg-orange-500 hover:text-white">Sign Up</Link></li>
+                        </>
+                    )}
                 </ul>
             </div>
         </nav>
