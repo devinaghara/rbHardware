@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaTrash, FaShoppingCart, FaPlus, FaMinus } from "react-icons/fa";
 import { useDispatch, useSelector } from 'react-redux';
 import { removeFromWishlist } from '../../Redux/actions/wishlistAction';
-import { addItem, removeItem, updateQuantity } from '../../Redux/actions/cartActions';
+import { addToCart, updateQuantity } from '../../Redux/actions/cartActions';
 import Navbar from "../Landing/Navbar";
 import axios from "axios";
 import { API_URI } from "../../../config";
@@ -13,10 +13,10 @@ export default function WishlistPage() {
     const dispatch = useDispatch();
     const wishlistItems = useSelector(state => state.wishlist.items);
     const cartItems = useSelector(state => state.cart.items);
+    const cartLoading = useSelector(state => state.cart.loading);
     const [wishlistProducts, setWishlistProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isUpdatingCart, setIsUpdatingCart] = useState(false);
 
     useEffect(() => {
         const fetchWishlistProducts = async () => {
@@ -83,52 +83,44 @@ export default function WishlistPage() {
 
     const handleAddToCart = (product) => {
         try {
-            setIsUpdatingCart(true);
             // Check if product is already in cart
-            const existingCartItem = cartItems.find(item =>
-                `${item.id}-${item.color}` === `${product._id}-${product.color}`
+            const existingCartItem = cartItems.find(item => 
+                item.productId === product._id || 
+                (item.productId === product._id && item.color === product.color)
             );
     
             if (existingCartItem) {
                 // If product exists, update quantity
                 dispatch(updateQuantity(
-                    `${product._id}-${product.color}`,
+                    existingCartItem._id,
                     existingCartItem.quantity + 1
                 ));
             } else {
                 // If product doesn't exist, add with quantity 1
-                dispatch(addItem({
-                    ...product,
-                    quantity: 1,
-                    id: product._id
-                }));
+                dispatch(addToCart(product, 1));
             }
         } catch (error) {
             console.error("Error adding to cart:", error);
             setError("Failed to add item to cart");
-        } finally {
-            setIsUpdatingCart(false);
         }
     };
     
     const handleRemoveFromCart = (product) => {
         try {
-            setIsUpdatingCart(true);
-            const existingCartItem = cartItems.find(item =>
-                `${item.id}-${item.color}` === `${product._id}-${product.color}`
+            const existingCartItem = cartItems.find(item => 
+                item.productId === product._id || 
+                (item.productId === product._id && item.color === product.color)
             );
     
-            if (existingCartItem) {
+            if (existingCartItem && existingCartItem.quantity > 1) {
                 dispatch(updateQuantity(
-                    `${product._id}-${product.color}`,
+                    existingCartItem._id,
                     existingCartItem.quantity - 1
                 ));
             }
         } catch (error) {
             console.error("Error removing from cart:", error);
             setError("Failed to remove item from cart");
-        } finally {
-            setIsUpdatingCart(false);
         }
     };
 
@@ -177,8 +169,9 @@ export default function WishlistPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {wishlistProducts.map((product) => {
-                                const cartItem = cartItems.find(item =>
-                                    (item._id === product._id) || (item.id === product._id)
+                                const cartItem = cartItems.find(item => 
+                                    item.productId === product._id || 
+                                    (item.productId === product._id && item.color === product.color)
                                 );
 
                                 return (
@@ -206,8 +199,8 @@ export default function WishlistPage() {
                                                         <div className="flex items-center space-x-4">
                                                             <button
                                                                 className="bg-red-500 text-white p-2 rounded-md disabled:opacity-50"
-                                                                onClick={() => handleRemoveFromCart(product._id)}
-                                                                disabled={isUpdatingCart}
+                                                                onClick={() => handleRemoveFromCart(product)}
+                                                                disabled={cartLoading}
                                                             >
                                                                 <FaMinus />
                                                             </button>
@@ -215,7 +208,7 @@ export default function WishlistPage() {
                                                             <button
                                                                 className="bg-green-500 text-white p-2 rounded-md disabled:opacity-50"
                                                                 onClick={() => handleAddToCart(product)}
-                                                                disabled={isUpdatingCart}
+                                                                disabled={cartLoading}
                                                             >
                                                                 <FaPlus />
                                                             </button>
@@ -224,7 +217,7 @@ export default function WishlistPage() {
                                                         <button
                                                             className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50 transition duration-300"
                                                             onClick={() => handleAddToCart(product)}
-                                                            disabled={isUpdatingCart}
+                                                            disabled={cartLoading}
                                                         >
                                                             <FaShoppingCart className="mr-2" />
                                                             Add to Cart
@@ -234,7 +227,7 @@ export default function WishlistPage() {
                                                 <button
                                                     onClick={() => handleRemoveFromWishlist(product._id)}
                                                     className="p-2 text-red-500 hover:text-red-600 disabled:opacity-50 transition duration-300"
-                                                    disabled={isUpdatingCart}
+                                                    disabled={cartLoading}
                                                 >
                                                     <FaTrash />
                                                 </button>

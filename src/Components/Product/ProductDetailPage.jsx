@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../Landing/Navbar";
 import { useDispatch, useSelector } from 'react-redux';
-import { addItem, removeItem, updateQuantity } from '../../Redux/actions/cartActions';
+import { addToCart, updateQuantity, removeItem } from '../../Redux/actions/cartActions';
 import { addToWishlist, removeFromWishlist } from '../../Redux/actions/wishlistAction';
 import { API_URI } from "../../../config";
 import ImageMosaicLoader from "../Loader/ImageMosaicLoader";
@@ -18,19 +18,22 @@ export default function ProductDetailPage() {
     const [linkedProducts, setLinkedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [currentVariantId, setCurrentVariantId] = useState(null);
 
     const cartItems = useSelector(state => state.cart.items);
-
     const wishlistItems = useSelector(state => state.wishlist?.items || []);
-    // const isInWishlist = product ? (wishlistItems || []).includes(product.mainProductId) : false;
+    
     const isInWishlist = product ? wishlistItems.includes(product._id) : false;
-    // Update cart item finding logic to match with both id and color
-    const cartItem = cartItems.find(item =>
-        (item.id === product?._id || item._id === product?._id) &&
-        item.color === product?.color
+    
+    // Find the cart item for the current variant
+    const cartItem = cartItems.find(item => 
+        item.productId === currentVariantId || 
+        item._id === currentVariantId || 
+        item.id === currentVariantId
     );
-
-    // console.log(product)
+    
+    const quantityInCart = cartItem ? cartItem.quantity : 0;
 
     useEffect(() => {
         const fetchProductDetails = async () => {
@@ -49,12 +52,13 @@ export default function ProductDetailPage() {
                     variant => variant._id === productId
                 ) || mainProduct.linkedProducts[0];
 
-                console.log("Current variant id", currentVariant._id)
+                // Set the current variant ID
+                setCurrentVariantId(currentVariant._id);
 
                 setProduct({
-                    _id: currentVariant._id,  // This will give you the variant ID like "678e81ee503cd72b13a19cbc"
-                    mainProductId: mainProduct._id,  // Keep main product ID if needed
-                    productId: mainProduct.productId,
+                    _id: currentVariant._id,
+                    mainProductId: mainProduct._id,
+                    productId: currentVariant._id, // Ensure this matches the ID used in cart
                     name: currentVariant.name,
                     price: currentVariant.price,
                     images: currentVariant.images,
@@ -68,7 +72,7 @@ export default function ProductDetailPage() {
                 setSelectedImage(currentVariant.images[0]);
 
                 const variants = mainProduct.linkedProducts.map(variant => ({
-                    productId: mainProduct._id,
+                    productId: variant._id, // Use variant ID as productId for cart
                     variantId: variant._id,
                     color: variant.color,
                     colorCode: variant.colorCode,
@@ -98,43 +102,64 @@ export default function ProductDetailPage() {
     if (!product) return <div className="text-center mt-20">Product not found</div>;
 
     const handleColorChange = (colorVariant) => {
+        // Update the current variant ID when changing color
+        setCurrentVariantId(colorVariant.variantId);
+        
         setProduct(prev => ({
             ...prev,
-            ...colorVariant
+            _id: colorVariant.variantId,
+            productId: colorVariant.variantId,
+            name: colorVariant.name,
+            price: colorVariant.price,
+            images: colorVariant.images,
+            color: colorVariant.color,
+            colorCode: colorVariant.colorCode,
+            description: colorVariant.description
         }));
+        
         setSelectedImage(colorVariant.images[0]);
+        
+        // Optionally, update URL to reflect the variant change
+        navigate(`/product/${colorVariant.variantId}`, { replace: true });
     };
 
-    const addToCart = () => {
+    const addToCartHandler = () => {
         if (product) {
-            const cartProduct = {
-                id: product._id,
-                name: product.name,
-                price: product.price,
-                description: product.description,
-                images: product.images,
-                color: product.color,
-                colorCode: product.colorCode,
-                material: product.material,
-                category: product.category,
-                quantity: 1
-            };
-            dispatch(addItem(cartProduct));
+            setIsAddingToCart(true);
+            dispatch(addToCart({
+                ...product,
+                productId: product._id  // Ensure productId is set correctly
+            }))
+            .finally(() => {
+                setIsAddingToCart(false);
+            });
         }
     };
 
-    const removeFromCart = () => {
-        if (product && cartItem) {
-            dispatch(updateQuantity(`${product._id}-${product.color}`, cartItem.quantity - 1));
+    const increaseQuantity = () => {
+        if (cartItem) {
+            const itemId = cartItem._id || cartItem.id || cartItem.productId;
+            dispatch(updateQuantity(itemId, cartItem.quantity + 1));
+        }
+    };
+
+    const decreaseQuantity = () => {
+        if (cartItem) {
+            const itemId = cartItem._id || cartItem.id || cartItem.productId;
+            if (cartItem.quantity > 1) {
+                dispatch(updateQuantity(itemId, cartItem.quantity - 1));
+            } else {
+                dispatch(removeItem(itemId));
+            }
         }
     };
 
     const toggleWishlist = () => {
         if (!product) return;
         if (isInWishlist) {
-            dispatch(removeFromWishlist(product._id));  // Using variant ID
+            dispatch(removeFromWishlist(product._id));
         } else {
-            dispatch(addToWishlist(product._id));  // Using variant ID
+            dispatch(addToWishlist(product._id));
         }
     };
 
@@ -175,7 +200,7 @@ export default function ProductDetailPage() {
                         <div className="flex space-x-4 mt-2">
                             {linkedProducts.map((variant) => (
                                 <div
-                                    key={`${variant.productId}-${variant.color}`}
+                                    key={`${variant.variantId}-${variant.color}`}
                                     className="relative cursor-pointer group"
                                     onClick={() => handleColorChange(variant)}
                                 >
@@ -196,33 +221,41 @@ export default function ProductDetailPage() {
 
                     {/* Cart and wishlist actions */}
                     <div className="flex space-x-4 my-4">
-                        {cartItem ? (
-                            <div className="flex items-center space-x-4">
+                        {quantityInCart > 0 ? (
+                            <div className="flex items-center justify-between bg-gray-100 rounded-lg p-1 w-40">
                                 <button
-                                    className="bg-red-500 text-white p-2 rounded-md"
-                                    onClick={removeFromCart}
+                                    onClick={decreaseQuantity}
+                                    className="p-2 bg-orange-500 text-white rounded-l-lg hover:bg-orange-600 transition-colors duration-300"
+                                    aria-label="Decrease quantity"
                                 >
-                                    <FaMinus />
+                                    <FaMinus className="w-3 h-3" />
                                 </button>
-                                <span>{cartItem.quantity}</span>
+                                <span className="flex-grow text-center font-semibold text-gray-800">
+                                    {quantityInCart}
+                                </span>
                                 <button
-                                    className="bg-green-500 text-white p-2 rounded-md"
-                                    onClick={addToCart}
+                                    onClick={increaseQuantity}
+                                    className="p-2 bg-orange-500 text-white rounded-r-lg hover:bg-orange-600 transition-colors duration-300"
+                                    aria-label="Increase quantity"
                                 >
-                                    <FaPlus />
+                                    <FaPlus className="w-3 h-3" />
                                 </button>
                             </div>
                         ) : (
                             <button
-                                className="px-4 py-2 bg-orange-500 text-white rounded transition duration-300 ease-in-out hover:bg-orange-600"
-                                onClick={addToCart}
+                                className={`px-4 py-2 ${isAddingToCart ? 'bg-orange-400' : 'bg-orange-500 hover:bg-orange-600'} text-white rounded transition duration-300 ease-in-out
+                                    flex items-center justify-center gap-2
+                                    focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50`}
+                                onClick={addToCartHandler}
+                                disabled={isAddingToCart}
                             >
                                 <FaShoppingCart className="inline-block mr-2" />
-                                Add to Cart
+                                {isAddingToCart ? 'Adding...' : 'Add to Cart'}
                             </button>
                         )}
                         <button
-                            className={`p-2 rounded-md ${isInWishlist ? "bg-red-500" : "bg-gray-500"}`}
+                            className={`p-2 rounded-md ${isInWishlist ? "bg-red-500" : "bg-gray-500"} 
+                                hover:scale-110 transition-transform duration-300`}
                             onClick={toggleWishlist}
                         >
                             <FaHeart className="text-white" />

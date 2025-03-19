@@ -1,30 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { FaTrash, FaPlus, FaMinus, FaArrowLeft, FaShoppingCart } from 'react-icons/fa';
-import { addItem, removeItem, updateQuantity } from '../../Redux/actions/cartActions';
+import { fetchCart, removeItem, updateQuantity } from '../../Redux/actions/cartActions';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../Landing/Navbar';
 
 const CartPage = () => {
-    const cartItems = useSelector(state => state.cart.items);
-    const totalAmount = useSelector(state => state.cart.totalAmount);
+    const { items: cartItems, totalAmount, loading, error } = useSelector(state => state.cart);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    // Fetch cart on component mount
+    useEffect(() => {
+        dispatch(fetchCart());
+    }, [dispatch]);
+
     const handleIncreaseQuantity = (item) => {
-        dispatch(updateQuantity(`${item.id}-${item.color}`, item.quantity + 1));
+        dispatch(updateQuantity(item._id, item.quantity + 1));
     };
-    
+
     const handleDecreaseQuantity = (item) => {
         if (item.quantity > 1) {
-            dispatch(updateQuantity(`${item.id}-${item.color}`, item.quantity - 1));
+            dispatch(updateQuantity(item._id, item.quantity - 1));
         } else {
-            dispatch(updateQuantity(`${item.id}-${item.color}`, 0));
+            dispatch(removeItem(item._id));
         }
     };
-    
+
     const handleRemoveItem = (item) => {
-        dispatch(updateQuantity(`${item.id}-${item.color}`, 0));
+        dispatch(removeItem(item._id));
     };
 
     const handleProceedToPay = () => {
@@ -34,6 +38,37 @@ const CartPage = () => {
     const handleContinueShopping = () => {
         navigate('/product');
     };
+
+    // Show loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <Navbar />
+                <div className="text-center text-orange-500">
+                    <p className="text-xl">Loading your cart...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        return (
+            <div className="min-h-screen bg-white">
+                <Navbar />
+                <div className="container mx-auto px-4 py-12 mt-10 text-center">
+                    <h1 className="text-2xl font-bold text-red-500 mb-4">Error loading cart</h1>
+                    <p className="text-gray-700 mb-4">{error}</p>
+                    <button
+                        onClick={() => dispatch(fetchCart())}
+                        className="bg-orange-500 hover:bg-orange-600 text-black font-bold py-2 px-4 rounded-full"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white">
@@ -45,7 +80,7 @@ const CartPage = () => {
                         <div className="text-center">
                             <FaShoppingCart className="mx-auto text-8xl text-orange-400 mb-6" />
                             <p className="text-2xl mb-6 text-orange-300">Your cart is feeling a bit lonely</p>
-                            <button 
+                            <button
                                 onClick={handleContinueShopping}
                                 className="bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 px-6 rounded-full transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-50"
                             >
@@ -58,9 +93,17 @@ const CartPage = () => {
                         <div className="lg:col-span-2">
                             <div className="bg-black bg-opacity-90 backdrop-filter rounded-2xl overflow-hidden shadow-xl border border-orange-500 border-opacity-20">
                                 {cartItems.map((item) => (
-                                    <div key={`${item.id}-${item.color}`} className="flex flex-col sm:flex-row items-center justify-between p-6 border-b border-orange-500 border-opacity-20 last:border-b-0">
+                                    <div key={item._id} className="flex flex-col sm:flex-row items-center justify-between p-6 border-b border-orange-500 border-opacity-20 last:border-b-0">
                                         <div className="flex items-center space-x-6 mb-4 sm:mb-0">
-                                            <img src={item.images[0]} alt={item.name} className="w-28 h-28 object-cover rounded-lg shadow-md" />
+                                            <img
+                                                src={item.image || (item.images && item.images.length > 0 ? item.images[0] : '/path/to/fallback/image.jpg')}
+                                                alt={item.name || 'Product'}
+                                                className="w-20 h-20 object-cover rounded-lg border border-orange-500 border-opacity-20"
+                                                onError={(e) => {
+                                                    e.target.src = '/path/to/fallback/image.jpg';
+                                                    e.target.onerror = null;
+                                                }}
+                                            />
                                             <div>
                                                 <h2 className="text-xl font-bold text-orange-400">{item.name}</h2>
                                                 <p className="text-sm text-gray-400 mt-1">{item.description}</p>
