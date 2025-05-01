@@ -4,9 +4,10 @@ import { X, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 const COLOR_MAPPING = {
     'Jet Black': '#0a0a0a',
     'Antique': '#5e503f',
-    'Matt': '#5e503f',
+    'Matt': '#bbc2cc',
     'Gold PVD': '#ffd700',
-    'Rose Gold PVD': '#b76e79'
+    'Rose Gold PVD': '#b76e79',
+    'Graphite':'#4f555b'
 };
 
 const ProductForm = ({
@@ -164,7 +165,7 @@ const ProductForm = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center overflow-y-auto p-4">
+        <div className="fixed overflow-auto inset-0 bg-black/50 flex items-center justify-center overflow-y-auto p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl">
                 <div className="flex items-center justify-between p-6 border-b">
                     <h2 className="text-xl font-semibold text-gray-800">
