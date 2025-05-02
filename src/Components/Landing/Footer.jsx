@@ -39,8 +39,6 @@ const Footer = () => {
                             <h4 className="text-lg">Contact</h4>
                             <p className="text-base">
                                 Phone: +91 9824133099
-                                <br />
-                                Phone: +91 9890206131
                             </p>
                         </div>
                     </div>

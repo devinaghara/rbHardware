@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaSync, FaSignOutAlt } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaSync, FaSignOutAlt, FaClipboardList } from 'react-icons/fa';
 import axios from 'axios';
 import { API_URI } from '../../../config';
 import { useNavigate } from 'react-router-dom';
-import ProductForm from './ProductForm'; // Add this import
+import ProductForm from './ProductForm';
 import ProductTable from './ProductTable';
+import OrdersTable from './OrdersTable';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('products');
@@ -12,8 +13,11 @@ const AdminDashboard = () => {
     const [categories, setCategories] = useState([]);
     const [colors, setColors] = useState([]);
     const [materials, setMaterials] = useState([]);
+    const [orders, setOrders] = useState([]);
     const [showProductForm, setShowProductForm] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     const emptyProductForm = {
@@ -49,20 +53,50 @@ const AdminDashboard = () => {
     }, []);
 
     const fetchAllData = async () => {
+        setLoading(true);
+        setError(null);
+        
         try {
+            // Fetch products, categories, colors, and materials
             const [productsRes, categoriesRes, colorsRes, materialsRes] = await Promise.all([
                 axios.get(`${API_URI}/plist/productlist`),
                 axios.get(`${API_URI}/categoryfilter/categories`),
                 axios.get(`${API_URI}/colorfilter/colors`),
-                axios.get(`${API_URI}/materialfilter/materials`)
+                axios.get(`${API_URI}/materialfilter/materials`),
             ]);
 
             setProducts(productsRes.data.products);
             setCategories(categoriesRes.data);
             setColors(colorsRes.data);
             setMaterials(materialsRes.data);
+            
+            // Fetch orders with proper error handling
+            try {
+                console.log('Fetching orders from:', `${API_URI}/order/all`);
+                const ordersRes = await axios.get(`${API_URI}/order/all`, { 
+                    withCredentials: true 
+                });
+                
+                console.log('Orders response:', ordersRes.data);
+                
+                if (ordersRes.data && ordersRes.data.success) {
+                    setOrders(ordersRes.data.orders || []);
+                } else {
+                    console.warn('Orders API returned success: false');
+                    setOrders([]);
+                }
+            } catch (orderError) {
+                console.error('Error fetching orders:', orderError);
+                console.error('Error details:', orderError.response?.data || orderError.message);
+                // Continue with other data even if orders fail
+                setOrders([]);
+            }
+            
         } catch (error) {
             console.error('Error fetching data:', error);
+            setError('Failed to load dashboard data. Please try again later.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -188,6 +222,71 @@ const AdminDashboard = () => {
         }
     };
 
+    // Function to update order status with improved error handling
+    const handleUpdateOrderStatus = async (userId, orderId, newStatus) => {
+        try {
+            console.log(`Updating order status: ${orderId} to ${newStatus}`);
+            
+            try {
+                // Try the /admin/:userId/:orderId/status endpoint first
+                console.log(`Trying endpoint: ${API_URI}/order/admin/${userId}/${orderId}/status`);
+                const response = await axios.patch(
+                    `${API_URI}/order/admin/${userId}/${orderId}/status`,
+                    { status: newStatus },
+                    { withCredentials: true }
+                );
+                console.log('Status update successful:', response.data);
+            } catch (firstError) {
+                console.warn('First endpoint failed:', firstError.message);
+                
+                // Try the alternative endpoint
+                console.log(`Trying alternative endpoint: ${API_URI}/order/${orderId}/status`);
+                const response = await axios.patch(
+                    `${API_URI}/order/${orderId}/status`,
+                    { status: newStatus, userId },
+                    { withCredentials: true }
+                );
+                console.log('Status update successful with alternative endpoint:', response.data);
+            }
+            
+            // Refresh orders after status update
+            fetchAllData();
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            console.error('Error details:', error.response?.data || error.message);
+            alert('Failed to update order status. Please try again.');
+        }
+    };
+
+    if (loading && !products.length) {
+        return (
+            <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading dashboard data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
+                <div className="bg-white rounded-lg shadow-lg p-6 max-w-md">
+                    <h2 className="text-2xl font-semibold text-red-600 mb-4">Error</h2>
+                    <p className="text-gray-700 mb-4">{error}</p>
+                    <button
+                        onClick={handleRefresh}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center mx-auto"
+                    >
+                        <FaSync className="mr-2" />
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-100 p-6">
             <div className="max-w-7xl mx-auto">
@@ -212,7 +311,7 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="flex space-x-4 mb-6">
-                    {['products', 'categories', 'colors', 'materials'].map(tab => (
+                    {['products', 'orders', 'categories', 'colors', 'materials'].map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
@@ -258,6 +357,35 @@ const AdminDashboard = () => {
                                 onEdit={handleEditProduct}
                                 onDelete={(id) => deleteItem('product', id)}
                             />
+                        </div>
+                    )}
+
+                    {activeTab === 'orders' && (
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-semibold">Manage Orders</h2>
+                                <div className="flex items-center">
+                                    <FaClipboardList className="mr-2 text-orange-500" />
+                                    <span className="font-medium">{orders.length} Orders</span>
+                                </div>
+                            </div>
+                            {orders.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500">No orders found. This could be because there are no orders in the system yet, or there might be an issue with the API connection.</p>
+                                    <button 
+                                        onClick={handleRefresh}
+                                        className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                                    >
+                                        <FaSync className="inline mr-2" />
+                                        Retry Loading Orders
+                                    </button>
+                                </div>
+                            ) : (
+                                <OrdersTable 
+                                    orders={orders} 
+                                    onUpdateStatus={handleUpdateOrderStatus} 
+                                />
+                            )}
                         </div>
                     )}
 
