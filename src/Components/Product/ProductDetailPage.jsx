@@ -1,331 +1,317 @@
 import { useState, useEffect } from "react";
-import { FaHeart, FaShoppingCart, FaPlus, FaMinus, FaArrowLeft } from "react-icons/fa";
+import {
+  FaHeart,
+  FaShoppingCart,
+  FaPlus,
+  FaMinus,
+  FaArrowLeft,
+} from "react-icons/fa";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../Landing/Navbar";
-import { useDispatch, useSelector } from 'react-redux';
-import { addToCart, updateQuantity, removeItem } from '../../Redux/actions/cartActions';
-import { addToWishlist, removeFromWishlist } from '../../Redux/actions/wishlistAction';
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addToCart,
+  updateQuantity,
+  removeItem,
+} from "../../Redux/actions/cartActions";
+import {
+  addToWishlist,
+  removeFromWishlist,
+} from "../../Redux/actions/wishlistAction";
 import { API_URI } from "../../../config";
 import ImageMosaicLoader from "../Loader/ImageMosaicLoader";
 
 export default function ProductDetailPage() {
-    const { productId } = useParams();
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const [product, setProduct] = useState(null);
-    const [selectedImage, setSelectedImage] = useState("");
-    const [linkedProducts, setLinkedProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isAddingToCart, setIsAddingToCart] = useState(false);
-    const [currentVariantId, setCurrentVariantId] = useState(null);
+  const { productId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-    const cartItems = useSelector(state => state.cart.items);
-    const wishlistItems = useSelector(state => state.wishlist?.items || []);
-    
-    const isInWishlist = product ? wishlistItems.includes(product._id) : false;
-    
-    // Find the cart item for the current variant
-    const cartItem = cartItems.find(item => 
-        item.productId === currentVariantId || 
-        item._id === currentVariantId || 
-        item.id === currentVariantId
-    );
-    
-    const quantityInCart = cartItem ? cartItem.quantity : 0;
+  const [product, setProduct] = useState(null);
+  const [selectedImage, setSelectedImage] = useState("");
+  const [linkedProducts, setLinkedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [currentVariantId, setCurrentVariantId] = useState(null);
 
-    useEffect(() => {
-        const fetchProductDetails = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+  const cartItems = useSelector((state) => state.cart.items);
+  const wishlistItems = useSelector((state) => state.wishlist?.items || []);
+  const isInWishlist = product ? wishlistItems.includes(product._id) : false;
 
-                const response = await axios.get(`${API_URI}/plist/productlist/${productId}`);
+  const cartItem = cartItems.find(
+    (item) => item.productId === currentVariantId
+  );
+  const quantityInCart = cartItem ? cartItem.quantity : 0;
 
-                if (!response.data || !response.data.product) {
-                    throw new Error('Product data is missing or invalid');
-                }
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      const res = await axios.get(`${API_URI}/plist/productlist/${productId}`);
+      const main = res.data.product;
+      const current =
+        main.linkedProducts.find((v) => v._id === productId) ||
+        main.linkedProducts[0];
 
-                const mainProduct = response.data.product;
-                const currentVariant = mainProduct.linkedProducts.find(
-                    variant => variant._id === productId
-                ) || mainProduct.linkedProducts[0];
+      setCurrentVariantId(current._id);
+      setProduct({
+        _id: current._id,
+        name: current.name,
+        price: current.price,
+        images: current.images,
+        color: current.color,
+        colorCode: current.colorCode,
+        description: current.description,
+        category: main.category,
+        material: main.material,
+      });
 
-                // Set the current variant ID
-                setCurrentVariantId(currentVariant._id);
-
-                setProduct({
-                    _id: currentVariant._id,
-                    mainProductId: mainProduct._id,
-                    productId: currentVariant._id, // Ensure this matches the ID used in cart
-                    name: currentVariant.name,
-                    price: currentVariant.price,
-                    images: currentVariant.images,
-                    color: currentVariant.color,
-                    colorCode: currentVariant.colorCode,
-                    description: currentVariant.description,
-                    category: mainProduct.category,
-                    material: mainProduct.material
-                });
-
-                setSelectedImage(currentVariant.images[0]);
-
-                const variants = mainProduct.linkedProducts.map(variant => ({
-                    productId: variant._id, // Use variant ID as productId for cart
-                    variantId: variant._id,
-                    color: variant.color,
-                    colorCode: variant.colorCode,
-                    name: variant.name,
-                    price: variant.price,
-                    images: variant.images,
-                    description: variant.description
-                }));
-
-                setLinkedProducts(variants);
-
-            } catch (error) {
-                console.error("Error fetching product details:", error);
-                setError(error.message || 'Failed to fetch product details');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (productId) {
-            fetchProductDetails();
-        }
-    }, [productId]);
-
-    if (loading) return <ImageMosaicLoader />;
-    if (error) return <div className="text-center mt-20 text-red-500">Error: {error}</div>;
-    if (!product) return <div className="text-center mt-20">Product not found</div>;
-
-    const handleColorChange = (colorVariant) => {
-        // Update the current variant ID when changing color
-        setCurrentVariantId(colorVariant.variantId);
-        
-        setProduct(prev => ({
-            ...prev,
-            _id: colorVariant.variantId,
-            productId: colorVariant.variantId,
-            name: colorVariant.name,
-            price: colorVariant.price,
-            images: colorVariant.images,
-            color: colorVariant.color,
-            colorCode: colorVariant.colorCode,
-            description: colorVariant.description
-        }));
-        
-        setSelectedImage(colorVariant.images[0]);
-        
-        // Update URL to reflect the variant change
-        navigate(`/product/${colorVariant.variantId}`, { replace: true });
+      setSelectedImage(current.images[0]);
+      setLinkedProducts(main.linkedProducts);
+      setLoading(false);
     };
 
-    const addToCartHandler = () => {
-        if (product) {
-            setIsAddingToCart(true);
-            dispatch(addToCart({
-                ...product,
-                productId: product._id  // Ensure productId is set correctly
-            }))
-            .finally(() => {
-                setIsAddingToCart(false);
-            });
-        }
-    };
+    fetchProductDetails();
+  }, [productId]);
 
-    const increaseQuantity = () => {
-        if (cartItem) {
-            const itemId = cartItem._id || cartItem.id || cartItem.productId;
-            dispatch(updateQuantity(itemId, cartItem.quantity + 1));
-        }
-    };
+  const handleColorChange = (variant) => {
+    setCurrentVariantId(variant._id);
+    setProduct(variant);
+    setSelectedImage(variant.images[0]);
+    navigate(`/product/${variant._id}`, { replace: true });
+  };
 
-    const decreaseQuantity = () => {
-        if (cartItem) {
-            const itemId = cartItem._id || cartItem.id || cartItem.productId;
-            if (cartItem.quantity > 1) {
-                dispatch(updateQuantity(itemId, cartItem.quantity - 1));
-            } else {
-                dispatch(removeItem(itemId));
-            }
-        }
-    };
+  const addToCartHandler = () => {
+    setIsAddingToCart(true);
+    dispatch(
+      addToCart({
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        images: product.images,
+        color: product.color,
+        size: product.size || null,
+      })
+    ).finally(() => setIsAddingToCart(false));
+  };
 
-    const toggleWishlist = () => {
-        if (!product) return;
-        if (isInWishlist) {
-            dispatch(removeFromWishlist(product._id));
-        } else {
-            dispatch(addToWishlist(product._id));
-        }
-    };
-    
-    const goBack = () => {
-        navigate(-1);
-    };
+  if (loading) return <ImageMosaicLoader />;
 
-    return (
-        <>
-            <Navbar />
-            <div className="min-h-screen bg-gray-100 pt-16 sm:pt-20 pb-8">
-                <div className="container mx-auto px-4">
-                    {/* Back button and wishlist in same row on mobile */}
-                    <div className="flex justify-between items-center my-4">
-                        <button 
-                            onClick={goBack}
-                            className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
-                        >
-                            <FaArrowLeft className="mr-2" />
-                            <span>Back</span>
-                        </button>
-                        
-                        {/* Wishlist button for mobile */}
-                        <button
-                            className={`md:hidden p-3 rounded-full shadow-md ${isInWishlist ? "bg-red-500" : "bg-white"} 
-                                transition-all duration-300 flex items-center justify-center`}
-                            onClick={toggleWishlist}
-                            aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-                        >
-                            <FaHeart className={`${isInWishlist ? "text-white" : "text-gray-500"} text-lg`} />
-                        </button>
-                    </div>
-                    
-                    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-                        <div className="flex flex-col lg:flex-row">
-                            {/* Left side - Images */}
-                            <div className="w-full lg:w-1/2 p-4">
-                                <div className="aspect-square overflow-hidden rounded-lg mb-4">
-                                    <img
-                                        src={selectedImage}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover rounded-lg"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {product.images.map((img, index) => (
-                                        <div 
-                                            key={index}
-                                            className={`aspect-square cursor-pointer border-2 rounded-md overflow-hidden
-                                                ${selectedImage === img ? "border-orange-500" : "border-transparent"}`}
-                                            onClick={() => setSelectedImage(img)}
-                                        >
-                                            <img
-                                                src={img}
-                                                alt={`${product.name}-${index}`}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+  return (
+    <>
+      <Navbar />
 
-                            {/* Right side - Product details */}
-                            <div className="w-full lg:w-1/2 p-4 md:p-6">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h1 className="text-2xl md:text-3xl font-semibold">{product.name}</h1>
-                                    
-                                    {/* Wishlist button for desktop/tablet */}
-                                    <button
-                                        className={`hidden md:flex p-2 rounded-full ${isInWishlist ? "bg-red-500" : "bg-gray-200 hover:bg-gray-300"} 
-                                            transition-all duration-300 items-center justify-center`}
-                                        onClick={toggleWishlist}
-                                        aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-                                    >
-                                        <FaHeart className={`${isInWishlist ? "text-white" : "text-gray-500"}`} />
-                                    </button>
-                                </div>
-                                <p className="text-xl text-gray-700 mb-4">₹{product.price.toFixed(2)}</p>
-                                
-                                {/* Product description */}
-                                <div className="mb-6">
-                                    <h2 className="text-lg font-medium mb-2">Description</h2>
-                                    <p className="text-gray-600">{product.description}</p>
-                                </div>
-                                
-                                {/* Product details */}
-                                <div className="mb-6">
-                                    <h2 className="text-lg font-medium mb-2">Details</h2>
-                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                        <div className="text-gray-500">Category</div>
-                                        <div>{product.category}</div>
-                                        {product.material && (
-                                            <>
-                                                <div className="text-gray-500">Material</div>
-                                                <div>{product.material}</div>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                                
-                                {/* Color variants */}
-                                <div className="mb-6">
-                                    <h2 className="text-lg font-medium mb-2">Available Colors:</h2>
-                                    <div className="flex flex-wrap gap-4">
-                                        {linkedProducts.map((variant) => (
-                                            <div
-                                                key={`${variant.variantId}-${variant.color}`}
-                                                className="relative cursor-pointer group"
-                                                onClick={() => handleColorChange(variant)}
-                                            >
-                                                <div
-                                                    className={`w-8 h-8 rounded-full 
-                                                        ${product.color === variant.color ? 'ring-2 ring-offset-2 ring-orange-500' : ''}`}
-                                                    style={{ backgroundColor: variant.colorCode }}
-                                                />
-                                                <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 
-                                                    bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 
-                                                    transition-opacity duration-200 mb-2 whitespace-nowrap z-10">
-                                                    {variant.color}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+      <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] to-[#eef2f7] pt-16 sm:pt-24 px-3 sm:px-6 pb-36">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {/* ✅ IMAGE SECTION */}
+          <div className="lg:sticky lg:top-24">
+            <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-3xl p-4 shadow-2xl">
+              <div className="relative overflow-hidden rounded-2xl mb-4">
+                <img
+                  src={selectedImage}
+                  className="w-full h-[260px] sm:h-[360px] lg:h-[420px] object-cover transition duration-700 hover:scale-105"
+                />
 
-                                {/* Cart actions */}
-                                <div className="flex flex-wrap gap-4 items-center">
-                                    {quantityInCart > 0 ? (
-                                        <div className="flex items-center justify-between bg-gray-100 rounded-lg p-1 w-32 sm:w-40">
-                                            <button
-                                                onClick={decreaseQuantity}
-                                                className="p-2 bg-orange-500 text-white rounded-l-lg hover:bg-orange-600 transition-colors duration-300"
-                                                aria-label="Decrease quantity"
-                                            >
-                                                <FaMinus className="w-3 h-3" />
-                                            </button>
-                                            <span className="flex-grow text-center font-semibold text-gray-800">
-                                                {quantityInCart}
-                                            </span>
-                                            <button
-                                                onClick={increaseQuantity}
-                                                className="p-2 bg-orange-500 text-white rounded-r-lg hover:bg-orange-600 transition-colors duration-300"
-                                                aria-label="Increase quantity"
-                                            >
-                                                <FaPlus className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            className={`px-4 py-2 ${isAddingToCart ? 'bg-orange-400' : 'bg-orange-500 hover:bg-orange-600'} text-white rounded transition duration-300 ease-in-out
-                                                flex items-center justify-center gap-2 w-full sm:w-auto
-                                                focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50`}
-                                            onClick={addToCartHandler}
-                                            disabled={isAddingToCart}
-                                        >
-                                            <FaShoppingCart className="inline-block mr-2" />
-                                            {isAddingToCart ? 'Adding...' : 'Add to Cart'}
-                                        </button>
-                                    )}
-                                    {/* Wishlist button is removed from here since it's now in the header sections */}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {/* ✅ Floating Wishlist */}
+                <button
+                  onClick={() =>
+                    isInWishlist
+                      ? dispatch(removeFromWishlist(product._id))
+                      : dispatch(addToWishlist(product._id))
+                  }
+                  className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition 
+                ${
+                  isInWishlist
+                    ? "bg-red-500 text-white"
+                    : "bg-white text-gray-600"
+                }`}
+                >
+                  <FaHeart />
+                </button>
+              </div>
+
+              {/* ✅ Thumbnails */}
+              <div className="grid grid-cols-4 gap-3">
+                {product.images.map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    onClick={() => setSelectedImage(img)}
+                    className={`h-16 sm:h-20 object-cover rounded-xl cursor-pointer border-2 transition 
+                  ${
+                    selectedImage === img
+                      ? "border-orange-500"
+                      : "border-gray-200"
+                  }`}
+                  />
+                ))}
+              </div>
             </div>
-        </>
-    );
+          </div>
+
+          {/* ✅ PRODUCT INFO */}
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col gap-6">
+            {/* ✅ Title + Price */}
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                {product.name}
+              </h1>
+              <p className="text-orange-500 text-2xl font-bold mt-1">
+                ₹{product.price.toFixed(2)}
+              </p>
+            </div>
+
+            {/* ✅ Description */}
+            <p className="text-gray-600 leading-relaxed">
+              {product.description}
+            </p>
+
+            {/* ✅ Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm border border-gray-200 rounded-2xl p-4">
+              <div>
+                <p className="font-medium text-gray-500">Category</p>
+                <p>{product.category}</p>
+              </div>
+              {product.material && (
+                <div>
+                  <p className="font-medium text-gray-500">Material</p>
+                  <p>{product.material}</p>
+                </div>
+              )}
+            </div>
+
+            {/* ✅ Color Selector */}
+            <div>
+              <h3 className="font-semibold mb-2">Available Colors</h3>
+              <div className="flex gap-4 flex-wrap">
+                {linkedProducts.map((variant) => (
+                  <div
+                    key={variant._id}
+                    onClick={() => handleColorChange(variant)}
+                    className={`w-9 h-9 rounded-full cursor-pointer border-4 transition
+                  ${
+                    product._id === variant._id
+                      ? "border-orange-500"
+                      : "border-gray-200"
+                  }`}
+                    style={{ backgroundColor: variant.colorCode }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* ✅ DESKTOP CART CONTROLS */}
+            {/* ✅ DESKTOP CART CONTROLS */}
+            <div className="hidden sm:flex items-center gap-4 pt-4">
+              {quantityInCart > 0 ? (
+                <>
+                  {/* ✅ Quantity Controller */}
+                  <div className="flex items-center bg-orange-50 rounded-full overflow-hidden shadow-inner">
+                    <button
+                      onClick={() =>
+                        dispatch(
+                          updateQuantity(cartItem._id, quantityInCart - 1)
+                        )
+                      }
+                      className="px-6 py-3 bg-orange-500 text-white"
+                    >
+                      <FaMinus />
+                    </button>
+
+                    <span className="px-6 font-bold text-gray-900">
+                      {quantityInCart}
+                    </span>
+
+                    <button
+                      onClick={() =>
+                        dispatch(
+                          updateQuantity(cartItem._id, quantityInCart + 1)
+                        )
+                      }
+                      className="px-6 py-3 bg-orange-500 text-white"
+                    >
+                      <FaPlus />
+                    </button>
+                  </div>
+
+                  {/* ✅ NEW GO TO CART BUTTON */}
+                  <button
+                    onClick={() => navigate("/cart")}
+                    className="px-7 py-3 rounded-full border-2 border-orange-500 text-orange-500 
+        font-bold hover:bg-orange-500 hover:text-white transition flex items-center gap-2"
+                  >
+                    <FaShoppingCart />
+                    Go To Cart
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={addToCartHandler}
+                  disabled={isAddingToCart}
+                  className="px-10 py-4 rounded-full bg-gradient-to-r from-orange-500 to-yellow-400 
+      text-white font-bold shadow-xl hover:scale-105 transition flex items-center gap-3"
+                >
+                  <FaShoppingCart />
+                  {isAddingToCart ? "Adding..." : "Add to Cart"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ MOBILE FIXED CART BAR */}
+        <div className="fixed sm:hidden bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t shadow-2xl flex items-center justify-between px-4 py-3 z-50">
+          <div>
+            <p className="text-xs text-gray-500">Price</p>
+            <p className="text-lg font-bold text-orange-500">
+              ₹{product.price.toFixed(2)}
+            </p>
+          </div>
+
+          {quantityInCart > 0 ? (
+            <div className="flex items-center gap-2">
+              {/* ✅ Quantity Controller */}
+              <div className="flex items-center bg-orange-50 rounded-full overflow-hidden">
+                <button
+                  onClick={() =>
+                    dispatch(updateQuantity(cartItem._id, quantityInCart - 1))
+                  }
+                  className="px-4 py-2 bg-orange-500 text-white"
+                >
+                  <FaMinus />
+                </button>
+
+                <span className="px-5 font-bold">{quantityInCart}</span>
+
+                <button
+                  onClick={() =>
+                    dispatch(updateQuantity(cartItem._id, quantityInCart + 1))
+                  }
+                  className="px-4 py-2 bg-orange-500 text-white"
+                >
+                  <FaPlus />
+                </button>
+              </div>
+
+              {/* ✅ NEW GO TO CART BUTTON */}
+              <button
+                onClick={() => navigate("/cart")}
+                className="px-5 py-3 rounded-full bg-white border-2 border-orange-500 
+      text-orange-500 font-bold shadow"
+              >
+                Cart
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={addToCartHandler}
+              className="px-8 py-3 rounded-full bg-gradient-to-r from-orange-500 to-yellow-400 
+            text-white font-bold shadow-xl flex items-center gap-2"
+            >
+              <FaShoppingCart />
+              Add
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
 }

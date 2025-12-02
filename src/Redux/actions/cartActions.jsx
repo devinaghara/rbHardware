@@ -62,56 +62,63 @@ export const fetchCart = () => async (dispatch) => {
 
 // Add item to cart with optimistic update
 export const addToCart = (product, quantity = 1) => async (dispatch, getState) => {
-  // Create cart item
-  const cartItem = {
-    productId: product._id,
-    name: product.name,
-    price: product.price,
-    quantity,
-    image: product.images?.[0] || '',
-    color: product.color || null,
-    size: product.size || null
-  };
-  
-  // Optimistic update - add item to local state first
-  const currentState = getState().cart;
-  const existingItemIndex = currentState.items.findIndex(item => item.productId === product._id);
-  
-  if (existingItemIndex >= 0) {
-    // Item exists, update quantity
-    const updatedItem = {
-      ...currentState.items[existingItemIndex],
-      quantity: currentState.items[existingItemIndex].quantity + quantity
-    };
-    dispatch(updateCartItemAction(updatedItem));
-  } else {
-    // New item, add to cart
-    dispatch(cartSuccess({
-      items: [...currentState.items, cartItem],
-      totalAmount: currentState.totalAmount + (product.price * quantity)
-    }));
-  }
-  
-  // Then send request to server
   try {
-    const { data } = await axios.post(`${API_URI}/api/cart/add`, cartItem, { withCredentials: true });
-    
-    if (data.success) {
-      // Update with server response to ensure consistency
-      dispatch(cartSuccess(data.cart));
-    } else {
-      // Revert on failure
-      dispatch(cartFailure(data.message || 'Failed to add item to cart'));
-      // Refetch cart to ensure consistent state
-      dispatch(fetchCart());
+    if (!product || !product._id) {
+      throw new Error("Invalid product data: missing product._id");
     }
+
+    const cartItem = {
+      productId: product._id,   // ✅ ALWAYS VALID NOW
+      name: product.name || "",
+      price: Number(product.price) || 0,
+      quantity: Number(quantity) || 1,
+      image: product.images?.[0] || "",
+      color: product.color || "",
+      size: product.size || ""
+    };
+
+    // ✅ Optimistic update
+    const currentState = getState().cart;
+    const existingItem = currentState.items.find(
+      item => item.productId === cartItem.productId
+    );
+
+    let updatedItems;
+
+    if (existingItem) {
+      updatedItems = currentState.items.map(item =>
+        item.productId === cartItem.productId
+          ? { ...item, quantity: item.quantity + quantity }
+          : item
+      );
+    } else {
+      updatedItems = [...currentState.items, cartItem];
+    }
+
+    dispatch(cartSuccess({
+      items: updatedItems,
+      totalAmount: updatedItems.reduce((t, i) => t + i.price * i.quantity, 0)
+    }));
+
+    // ✅ SERVER REQUEST
+    const { data } = await axios.post(
+      `${API_URI}/api/cart/add`,
+      cartItem,
+      { withCredentials: true }
+    );
+
+    if (!data.success) {
+      throw new Error(data.message || "Add to cart failed");
+    }
+
+    dispatch(cartSuccess(data.cart));
   } catch (error) {
-    dispatch(cartFailure(error.response?.data?.message || 'Network error'));
-    console.error('Error adding to cart:', error);
-    // Refetch cart to ensure consistent state
+    console.error("❌ Add To Cart Failed:", error);
+    dispatch(cartFailure(error.message));
     dispatch(fetchCart());
   }
 };
+
 
 // Update cart item quantity with optimistic update
 export const updateQuantity = (itemId, quantity) => async (dispatch, getState) => {
