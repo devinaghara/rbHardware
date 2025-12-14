@@ -113,7 +113,7 @@ const CartPage = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* ✅ CART ITEMS */}
-            <div className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="h-auto lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
               {cartItems.map((item) => (
                 <div
                   key={item._id}
