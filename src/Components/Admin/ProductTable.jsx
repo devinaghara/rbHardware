@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import axios from 'axios';
+import { API_URI } from '../../../config';
 
-const ProductTable = ({ products, onEdit, onDelete }) => {
+const ProductTable = ({ products, onEdit, onDelete, onRefresh }) => {
     const [expandedRows, setExpandedRows] = useState({});
+    const [togglingId, setTogglingId] = useState(null);
 
     const toggleRow = (productId) => {
         setExpandedRows(prev => ({
             ...prev,
             [productId]: !prev[productId]
         }));
+    };
+
+    const handleToggleOrderable = async (product) => {
+        try {
+            setTogglingId(product._id);
+            await axios.patch(
+                `${API_URI}/plist/productlist/${product._id}/orderable`,
+                { isOrderable: !product.isOrderable },
+                { withCredentials: true }
+            );
+            if (onRefresh) onRefresh();
+        } catch (error) {
+            console.error('Failed to toggle orderable:', error);
+            alert(error.response?.data?.message || 'Failed to update product availability');
+        } finally {
+            setTogglingId(null);
+        }
     };
 
     return (
@@ -31,6 +51,9 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Variants
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Orderable
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
@@ -66,6 +89,26 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <button
+                                        onClick={() => handleToggleOrderable(product)}
+                                        disabled={togglingId === product._id}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                                            product.isOrderable !== false
+                                                ? 'bg-green-500'
+                                                : 'bg-gray-300'
+                                        } ${togglingId === product._id ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+                                        title={product.isOrderable !== false ? 'Click to disable ordering' : 'Click to enable ordering'}
+                                    >
+                                        <span
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                                                product.isOrderable !== false
+                                                    ? 'translate-x-6'
+                                                    : 'translate-x-1'
+                                            }`}
+                                        />
+                                    </button>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <button
                                         onClick={() => onEdit(product)}
                                         className="text-blue-600 hover:text-blue-900 mr-4"
                                     >
@@ -81,7 +124,7 @@ const ProductTable = ({ products, onEdit, onDelete }) => {
                             </tr>
                             {expandedRows[product._id] && (
                                 <tr>
-                                    <td colSpan="6" className="px-6 py-4">
+                                    <td colSpan="7" className="px-6 py-4">
                                         <div className="grid grid-cols-1 gap-4">
                                             {product.linkedProducts.map((linkedProduct, index) => (
                                                 <div 

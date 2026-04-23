@@ -82,7 +82,7 @@ const Navbar = () => {
   };
 
   return (
-    <>
+    <div className="fixed top-0 w-full z-50">
       <Marquee
         className="bg-orange-500 text-white py-1 font-semibold overflow-hidden"
         gradient={true}
@@ -91,7 +91,7 @@ const Navbar = () => {
         Welcome to RB Hardware | A Premium Hardware Collections
       </Marquee>
 
-      <nav className="bg-black shadow-lg fixed top-0 w-full z-50 mt-8">
+      <nav className="bg-black shadow-lg w-full">
         <div className="w-6xl mx-16">
           <div className="flex justify-between items-center">
             <div className="flex space-x-7 items-center">
@@ -347,7 +347,7 @@ const Navbar = () => {
           </ul>
         </div>
       </nav>
-    </>
+    </div>
   );
 };
 

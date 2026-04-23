@@ -72,8 +72,8 @@ const AdminDashboard = () => {
             
             // Fetch orders with proper error handling
             try {
-                console.log('Fetching orders from:', `${API_URI}/order/all`);
-                const ordersRes = await axios.get(`${API_URI}/order/all`, { 
+                console.log('Fetching orders from:', `${API_URI}/order/allOrder`);
+                const ordersRes = await axios.get(`${API_URI}/order/allOrder`, { 
                     withCredentials: true 
                 });
                 
@@ -222,39 +222,24 @@ const AdminDashboard = () => {
         }
     };
 
-    // Function to update order status with improved error handling
-    const handleUpdateOrderStatus = async (userId, orderId, newStatus) => {
+    // Function to update order status
+    const handleUpdateOrderStatus = async (orderId, updateData) => {
         try {
-            console.log(`Updating order status: ${orderId} to ${newStatus}`);
-            
-            try {
-                // Try the /admin/:userId/:orderId/status endpoint first
-                console.log(`Trying endpoint: ${API_URI}/order/admin/${userId}/${orderId}/status`);
-                const response = await axios.patch(
-                    `${API_URI}/order/admin/${userId}/${orderId}/status`,
-                    { status: newStatus },
-                    { withCredentials: true }
-                );
-                console.log('Status update successful:', response.data);
-            } catch (firstError) {
-                console.warn('First endpoint failed:', firstError.message);
-                
-                // Try the alternative endpoint
-                console.log(`Trying alternative endpoint: ${API_URI}/order/${orderId}/status`);
-                const response = await axios.patch(
-                    `${API_URI}/order/${orderId}/status`,
-                    { status: newStatus, userId },
-                    { withCredentials: true }
-                );
-                console.log('Status update successful with alternative endpoint:', response.data);
+            const response = await axios.patch(
+                `${API_URI}/order/admin/${orderId}/status`,
+                updateData,
+                { withCredentials: true }
+            );
+
+            if (response.data.success) {
+                // Refresh orders after successful update
+                fetchAllData();
+            } else {
+                alert(response.data.message || 'Failed to update order status');
             }
-            
-            // Refresh orders after status update
-            fetchAllData();
         } catch (error) {
             console.error('Error updating order status:', error);
-            console.error('Error details:', error.response?.data || error.message);
-            alert('Failed to update order status. Please try again.');
+            alert(error.response?.data?.message || 'Failed to update order status. Please try again.');
         }
     };
 
@@ -356,6 +341,7 @@ const AdminDashboard = () => {
                                 products={products}
                                 onEdit={handleEditProduct}
                                 onDelete={(id) => deleteItem('product', id)}
+                                onRefresh={fetchAllData}
                             />
                         </div>
                     )}
@@ -369,23 +355,10 @@ const AdminDashboard = () => {
                                     <span className="font-medium">{orders.length} Orders</span>
                                 </div>
                             </div>
-                            {orders.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-500">No orders found. This could be because there are no orders in the system yet, or there might be an issue with the API connection.</p>
-                                    <button 
-                                        onClick={handleRefresh}
-                                        className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                                    >
-                                        <FaSync className="inline mr-2" />
-                                        Retry Loading Orders
-                                    </button>
-                                </div>
-                            ) : (
-                                <OrdersTable 
-                                    orders={orders} 
-                                    onUpdateStatus={handleUpdateOrderStatus} 
-                                />
-                            )}
+                            <OrdersTable 
+                                orders={orders} 
+                                onUpdateStatus={handleUpdateOrderStatus} 
+                            />
                         </div>
                     )}
 

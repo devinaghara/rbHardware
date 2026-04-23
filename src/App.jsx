@@ -18,6 +18,7 @@ import OTPVerification from './Components/UserVerification/OTPVerification';
 import ResetPassword from './Components/UserVerification/ResetPassword';
 import { AuthProvider } from './Components/Contexts/AuthContext';
 import AdminDashboard from './Components/Admin/AdminDashboard';
+import GoogleLoginSuccess from './Components/Login/GoogleLoginSuccess';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route path="/verify-otp" element={<OTPVerification />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/login-success" element={<GoogleLoginSuccess />} />
           </Routes>
         </Router>
       </AuthProvider>

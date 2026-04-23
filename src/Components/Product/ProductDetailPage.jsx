@@ -4,7 +4,7 @@ import {
   FaShoppingCart,
   FaPlus,
   FaMinus,
-  FaArrowLeft,
+  FaBan,
 } from "react-icons/fa";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -13,7 +13,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   addToCart,
   updateQuantity,
-  removeItem,
 } from "../../Redux/actions/cartActions";
 import {
   addToWishlist,
@@ -33,6 +32,7 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [currentVariantId, setCurrentVariantId] = useState(null);
+  const [isOrderable, setIsOrderable] = useState(true);
 
   const cartItems = useSelector((state) => state.cart.items);
   const wishlistItems = useSelector((state) => state.wishlist?.items || []);
@@ -52,6 +52,7 @@ export default function ProductDetailPage() {
         main.linkedProducts[0];
 
       setCurrentVariantId(current._id);
+      setIsOrderable(main.isOrderable !== false);
       setProduct({
         _id: current._id,
         name: current.name,
@@ -80,6 +81,7 @@ export default function ProductDetailPage() {
   };
 
   const addToCartHandler = () => {
+    if (!isOrderable) return;
     setIsAddingToCart(true);
     dispatch(
       addToCart({
@@ -109,6 +111,15 @@ export default function ProductDetailPage() {
                   src={selectedImage}
                   className="w-full h-[260px] sm:h-[360px] lg:h-[420px] object-cover transition duration-700 hover:scale-105"
                 />
+
+                {/* Unavailable overlay */}
+                {!isOrderable && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="bg-red-600 text-white px-6 py-3 rounded-full font-bold text-lg flex items-center gap-2 shadow-xl">
+                      <FaBan /> Not Available for Order
+                    </div>
+                  </div>
+                )}
 
                 {/* ✅ Floating Wishlist */}
                 <button
@@ -157,6 +168,12 @@ export default function ProductDetailPage() {
               <p className="text-orange-500 text-2xl font-bold mt-1">
                 ₹{product.price.toFixed(2)}
               </p>
+              {!isOrderable && (
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+                  <FaBan className="text-xs" />
+                  Currently unavailable for ordering
+                </div>
+              )}
             </div>
 
             {/* ✅ Description */}
@@ -199,9 +216,13 @@ export default function ProductDetailPage() {
             </div>
 
             {/* ✅ DESKTOP CART CONTROLS */}
-            {/* ✅ DESKTOP CART CONTROLS */}
             <div className="hidden sm:flex items-center gap-4 pt-4">
-              {quantityInCart > 0 ? (
+              {!isOrderable ? (
+                <div className="px-10 py-4 rounded-full bg-gray-300 text-gray-500 font-bold flex items-center gap-3 cursor-not-allowed">
+                  <FaBan />
+                  Not Available
+                </div>
+              ) : quantityInCart > 0 ? (
                 <>
                   {/* ✅ Quantity Controller */}
                   <div className="flex items-center bg-orange-50 rounded-full overflow-hidden shadow-inner">
@@ -232,7 +253,7 @@ export default function ProductDetailPage() {
                     </button>
                   </div>
 
-                  {/* ✅ NEW GO TO CART BUTTON */}
+                  {/* ✅ GO TO CART BUTTON */}
                   <button
                     onClick={() => navigate("/cart")}
                     className="px-7 py-3 rounded-full border-2 border-orange-500 text-orange-500 
@@ -266,7 +287,11 @@ export default function ProductDetailPage() {
             </p>
           </div>
 
-          {quantityInCart > 0 ? (
+          {!isOrderable ? (
+            <div className="px-6 py-3 rounded-full bg-gray-300 text-gray-500 font-bold text-sm flex items-center gap-2">
+              <FaBan /> Unavailable
+            </div>
+          ) : quantityInCart > 0 ? (
             <div className="flex items-center gap-2">
               {/* ✅ Quantity Controller */}
               <div className="flex items-center bg-orange-50 rounded-full overflow-hidden">
@@ -291,7 +316,7 @@ export default function ProductDetailPage() {
                 </button>
               </div>
 
-              {/* ✅ NEW GO TO CART BUTTON */}
+              {/* ✅ GO TO CART BUTTON */}
               <button
                 onClick={() => navigate("/cart")}
                 className="px-5 py-3 rounded-full bg-white border-2 border-orange-500 
