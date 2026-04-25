@@ -36,7 +36,7 @@ const AdminDashboard = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.get(`${API_URI}/auth/logout`, { withCredentials: true });
+            await axios.post(`${API_URI}/auth/logout`, { withCredentials: true });
             navigate("/login");
             console.log('User logged out');
         } catch (error) {
